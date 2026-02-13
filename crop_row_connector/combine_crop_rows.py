@@ -221,6 +221,9 @@ class Combine_crop_rows:
 
         #DF_crop_rows = pd.concat(crop_rows, ignore_index=True)
         DF_crop_rows = pd.DataFrame(crop_rows, columns=DF_vegetation_rows.columns)
+        #print(DF_crop_rows.head())
+
+        #DF_crop_rows.to_csv(self.output_path_line_points + "_debug_all_points.csv", index=False)
 
         DF_crop_rows["vegetation"] = DF_crop_rows["vegetation"].astype(int)
 
@@ -237,15 +240,42 @@ class Combine_crop_rows:
             right_on=["tile", "row"],
             how="left",
         )
-        DF_crop_rows = DF_crop_rows.drop(columns=["tile", "row"])
-        DF_crop_rows = DF_crop_rows.rename(columns={"crop_row": "row"})
-        DF_crop_rows = DF_crop_rows[["row", "x", "y", "vegetation", "duplicate"]]
+        #print(DF_crop_rows.head())
+        #DF_crop_rows.to_csv(self.output_path_line_points + "_debug_merged_points.csv", index=False)
 
-        self.length_of_all_crop_rows(DF_crop_rows.to_numpy())
+        DF_crop_rows_new = pd.DataFrame(columns=DF_crop_rows.columns)
+        # sort the crop rows by coordinates
+        for crop_row_id in DF_crop_rows["crop_row"].unique():
+            tile_number = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id]["tile"].mode()[0]
+            angle = tiles[tile_number].angle
+
+            #print("Sorting crop row: ", crop_row_id)
+            #print("Most common tile number: ", tile_number)
+            #print("Angle of tile: ", angle*180/math.pi)
+
+            crop_row = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id].copy()
+            if angle < math.pi / 4 or angle > 3 * math.pi / 4:
+                # sort by y coordinate
+                crop_row = crop_row.sort_values(by=["y", "x"])
+                #print("Sorting by y")
+            else:
+                # sort by x coordinate
+                crop_row = crop_row.sort_values(by=["x", "y"])
+                #print("Sorting by x")
+            DF_crop_rows_new = pd.concat([DF_crop_rows_new, crop_row], ignore_index=True)
+
+
+        DF_crop_rows_new = DF_crop_rows_new.drop(columns=["tile", "row"])
+        DF_crop_rows_new = DF_crop_rows_new.rename(columns={"crop_row": "row"})
+        DF_crop_rows_new = DF_crop_rows_new[["row", "x", "y", "vegetation", "duplicate"]]
+
+        #self.length_of_all_crop_rows(DF_crop_rows.to_numpy())
+
+        self.define_healthy_vegetation(DF_crop_rows_new, vegetation_threshold=20)
 
         path = self.output_path_line_points
         self.ensure_parent_directory_exist(Path(path))
-        DF_crop_rows.to_csv(path, index=False)
+        DF_crop_rows_new.to_csv(path, index=False)
 
         #print("Time to merge all points in all crop rows: ", time.time() - start_timer)
 
@@ -291,6 +321,56 @@ class Combine_crop_rows:
         print("Healthy vegetation length: ", length_high_vegetation)
         print("Low vegetation length: ", length_low_vegetation)
         return total_length
+
+    def define_healthy_vegetation(self, DF_crop_rows: pd.DataFrame, vegetation_threshold: int) -> pd.DataFrame:
+        """
+        Define healthy vegetation based on a threshold
+        """
+        time_start = time.time()
+        res = []
+        for crop_row_id in DF_crop_rows["row"].unique():
+            crop_row = DF_crop_rows[DF_crop_rows["row"] == crop_row_id]
+            #mask_healthy = crop_row["vegetation"] <= vegetation_threshold
+            #print(f"Crop row {crop_row_id}: {mask_healthy.sum()} healthy points out of {len(crop_row)} total points")
+            start, end = 0, 0
+            prev = 1
+            for idx in crop_row.index:
+                #print(idx)
+                vegetation = crop_row.at[idx, "vegetation"]
+                #print(f"Vegetation: {vegetation}")
+                if vegetation <= vegetation_threshold:
+                    if prev == 0:
+                        start = idx
+                    prev = 1
+                else:
+                    if prev == 1:
+                        end = idx - 1
+                        start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()
+                        end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()
+                        distance = np.linalg.norm(start_point - end_point)
+                        if distance >= 0.2: # arbitrary threshold for minimum length of healthy vegetation segment
+                            res.append((crop_row_id, start, end))
+                        #else:
+                            #print("Segment too short, not considered healthy vegetation: ", end - start)
+                    prev = 0
+            if prev == 1:
+                end = crop_row.index[-1]
+                res.append((crop_row_id, start, end))
+
+        print(f"Time to define healthy vegetation: {time.time() - time_start} seconds")
+
+        #print("Healthy vegetation segments: ", res)
+
+        # add new row called healthy_vegetation to DF_crop_rows and set it to 1 for the healthy vegetation segments and 0 for the rest
+        time_start = time.time()
+        DF_crop_rows["healthy_vegetation"] = 0
+
+        for crop_row_id, start, end in res:
+            DF_crop_rows.loc[(DF_crop_rows["row"] == crop_row_id) & (DF_crop_rows.index >= start) & (DF_crop_rows.index <= end), "healthy_vegetation"] = 1
+        print(f"Time to add healthy vegetation column: {time.time() - time_start} seconds")
+            
+            
+                
 
     def main(self, path_row_information: str, path_points_in_rows: str) -> None:
         time_start = time.time()
