@@ -9,9 +9,7 @@ The dataset includes two main files found in the `docs/test_dataset/input/` dire
 
 A visual representation of all the points in the orthomosaic can be seen below:
 
-.. figure:: ../figures/Field_detected.png
-
-    detected crop rows in an orthomosaic
+![detected crop rows in an orthomosaic](docs/figures/Field_detected.png)
 
 The orthomosaic from which the test data is derived can be found in the `docs/test_dataset/` directory as `orthomosaic_test_data.tif`, and can be viewed using georeferencer tools like QGIS.
 
