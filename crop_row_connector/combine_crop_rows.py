@@ -17,7 +17,7 @@ import crop_row_connector.combine_crop_rows_from_connections as combine_crop_row
 
 import crop_row_connector._native as mpro
 
-
+import shapefile  # type: ignore
 
 class tile:
     def __init__(
@@ -249,10 +249,6 @@ class Combine_crop_rows:
             tile_number = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id]["tile"].mode()[0]
             angle = tiles[tile_number].angle
 
-            #print("Sorting crop row: ", crop_row_id)
-            #print("Most common tile number: ", tile_number)
-            #print("Angle of tile: ", angle*180/math.pi)
-
             crop_row = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id].copy()
             if angle < math.pi / 4 or angle > 3 * math.pi / 4:
                 # sort by y coordinate
@@ -327,48 +323,78 @@ class Combine_crop_rows:
         Define healthy vegetation based on a threshold
         """
         time_start = time.time()
-        res = []
+
+        
+        w = shapefile.Writer("test_shapefile_healthy_lines")
+        w.field("Crop_row", "C")
+
+        
         for crop_row_id in DF_crop_rows["row"].unique():
             crop_row = DF_crop_rows[DF_crop_rows["row"] == crop_row_id]
-            #mask_healthy = crop_row["vegetation"] <= vegetation_threshold
-            #print(f"Crop row {crop_row_id}: {mask_healthy.sum()} healthy points out of {len(crop_row)} total points")
-            start, end = 0, 0
-            prev = 1
+
+            start, middle, end = 0, 0, 0
+            in_healthy_segment = False
+
+            start_found = False
+
+            healthy_lines = []
+
             for idx in crop_row.index:
-                #print(idx)
                 vegetation = crop_row.at[idx, "vegetation"]
-                #print(f"Vegetation: {vegetation}")
+
+                # skip the beginning of the crop row until the first healthy vegetation point is found
+                if not start_found and vegetation <= vegetation_threshold:
+                    start = idx
+                    start_found = True
+                    in_healthy_segment = True
+                    continue
+
                 if vegetation <= vegetation_threshold:
-                    if prev == 0:
-                        start = idx
-                    prev = 1
-                else:
-                    if prev == 1:
-                        end = idx - 1
-                        start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()
-                        end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()
-                        distance = np.linalg.norm(start_point - end_point)
+                    if not in_healthy_segment:
+                        #print(f'indexes for crop row {crop_row_id}: start: {start}, middle: {middle}, end: {end}')
+                        middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
+                        end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
+                        distance = np.linalg.norm(middle_point - end_point)
                         if distance >= 0.2: # arbitrary threshold for minimum length of healthy vegetation segment
-                            res.append((crop_row_id, start, end))
-                        #else:
-                            #print("Segment too short, not considered healthy vegetation: ", end - start)
-                    prev = 0
-            if prev == 1:
-                end = crop_row.index[-1]
-                res.append((crop_row_id, start, end))
+                            start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                            #print("Adding healthy vegetation segment: ", start_point, middle_point)
+                            healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
+
+                            start = idx
+
+                    in_healthy_segment = True
+                else:
+                    if in_healthy_segment:
+                        middle = idx - 1
+                    
+                    end = idx
+
+                    in_healthy_segment = False
+
+            if end != 0 and abs(start - end) > 1:
+                #print(f"ids for crop row {crop_row_id}: start: {start}, middle: {middle}, end: {end}")
+                start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
+                end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
+                #print("End of crop row reached: ", start_point, middle_point, end_point)
+                if in_healthy_segment:
+                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                    end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
+                    healthy_lines.append([[start_point[0], start_point[1]], [end_point[0], end_point[1]]])
+                else:
+                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                    middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
+                    healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
+
+            
+            if len(healthy_lines) != 0:
+                #print(f"Healthy segments for crop row {crop_row_id}: ", healthy_lines)
+                w.line(healthy_lines)
+                w.record(int(crop_row_id))
+        w.close()
 
         print(f"Time to define healthy vegetation: {time.time() - time_start} seconds")
-
-        #print("Healthy vegetation segments: ", res)
-
-        # add new row called healthy_vegetation to DF_crop_rows and set it to 1 for the healthy vegetation segments and 0 for the rest
-        time_start = time.time()
-        DF_crop_rows["healthy_vegetation"] = 0
-
-        for crop_row_id, start, end in res:
-            DF_crop_rows.loc[(DF_crop_rows["row"] == crop_row_id) & (DF_crop_rows.index >= start) & (DF_crop_rows.index <= end), "healthy_vegetation"] = 1
-        print(f"Time to add healthy vegetation column: {time.time() - time_start} seconds")
-            
+ 
             
                 
 
