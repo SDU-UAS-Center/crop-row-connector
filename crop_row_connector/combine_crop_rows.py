@@ -378,12 +378,8 @@ class Combine_crop_rows:
                 end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
                 #print("End of crop row reached: ", start_point, middle_point, end_point)
                 if in_healthy_segment:
-                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                    end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
                     healthy_lines.append([[start_point[0], start_point[1]], [end_point[0], end_point[1]]])
                 else:
-                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                    middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
                     healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
 
             
