@@ -43,9 +43,16 @@ parser.add_argument(
     help='Distance tolerance for two crop rows to be connected'
 )
 parser.add_argument(
-    "--run_single_thread",
-    action="store_true",
-    help="If set the program will run in as a single thread. Default is to run in parallel.",
+    "--vegetation_threshold",
+    default=20,
+    type=float,
+    help='Vegetation threshold for a point to be considered healthy vegetation'
+)
+parser.add_argument(
+    "--unhealthy_vegetation_length",
+    default=0.1,
+    type=float,
+    help="Length tolerance for unhealthy vegetation in the crop rows"
 )
 parser.add_argument(
     "--max_workers",
@@ -58,10 +65,11 @@ def _main():
     args = parser.parse_args()
     ccr = Combine_crop_rows.Combine_crop_rows()
     ccr.angle_tolerance = args.angle_tolerance
+    ccr.vegetation_threshold = args.vegetation_threshold
+    ccr.unhealthy_vegetation_length = args.unhealthy_vegetation_length
     ccr.ccbt.distance_tolerance = args.distance_tolerance
     ccr.output_path_connected_crop_rows = args.output_path_connected_crop_rows
     ccr.output_path_line_points = args.output_path_line_points
-    ccr.run_single_thread = args.run_single_thread
     ccr.max_workers = args.max_workers
     ccr.main(args.path_row_information, args.path_points_in_rows)
 

@@ -34,10 +34,11 @@ class tile:
 class Combine_crop_rows:
     def __init__(self):
         self.angle_tolerance = None
+        self.vegetation_threshold = None
+        self.unhealthy_vegetation_length = None
         self.output_path_connected_crop_rows = None
         self.output_path_line_points = None
 
-        self.run_single_thread = True
         self.max_workers = os.cpu_count()
 
         self.ccbt = find_connection_of_rows_between_two_tiles.find_connection_of_rows_between_two_tiles()
@@ -205,7 +206,7 @@ class Combine_crop_rows:
         path_points_in_rows: str,
         row_information: NDArray[Any],
         tiles: dict[int, tile],
-    ) -> None:
+    ) -> pd.DataFrame:
         """
         Merge all points in all crop rows
         """
@@ -219,11 +220,7 @@ class Combine_crop_rows:
 
         print("time to run loop: ", time.time() - start_time)
 
-        #DF_crop_rows = pd.concat(crop_rows, ignore_index=True)
         DF_crop_rows = pd.DataFrame(crop_rows, columns=DF_vegetation_rows.columns)
-        #print(DF_crop_rows.head())
-
-        #DF_crop_rows.to_csv(self.output_path_line_points + "_debug_all_points.csv", index=False)
 
         DF_crop_rows["vegetation"] = DF_crop_rows["vegetation"].astype(int)
 
@@ -240,8 +237,6 @@ class Combine_crop_rows:
             right_on=["tile", "row"],
             how="left",
         )
-        #print(DF_crop_rows.head())
-        #DF_crop_rows.to_csv(self.output_path_line_points + "_debug_merged_points.csv", index=False)
 
         DF_crop_rows_new = pd.DataFrame(columns=DF_crop_rows.columns)
         # sort the crop rows by coordinates
@@ -253,11 +248,10 @@ class Combine_crop_rows:
             if angle < math.pi / 4 or angle > 3 * math.pi / 4:
                 # sort by y coordinate
                 crop_row = crop_row.sort_values(by=["y", "x"])
-                #print("Sorting by y")
             else:
                 # sort by x coordinate
                 crop_row = crop_row.sort_values(by=["x", "y"])
-                #print("Sorting by x")
+
             DF_crop_rows_new = pd.concat([DF_crop_rows_new, crop_row], ignore_index=True)
 
 
@@ -267,13 +261,11 @@ class Combine_crop_rows:
 
         #self.length_of_all_crop_rows(DF_crop_rows.to_numpy())
 
-        self.define_healthy_vegetation(DF_crop_rows_new, vegetation_threshold=20)
-
         path = self.output_path_line_points
         self.ensure_parent_directory_exist(Path(path))
         DF_crop_rows_new.to_csv(path, index=False)
 
-        #print("Time to merge all points in all crop rows: ", time.time() - start_timer)
+        return DF_crop_rows_new
 
     def length_of_all_crop_rows(self, crop_rows: NDArray[Any]) -> float:
         """
@@ -318,7 +310,7 @@ class Combine_crop_rows:
         print("Low vegetation length: ", length_low_vegetation)
         return total_length
 
-    def define_healthy_vegetation(self, DF_crop_rows: pd.DataFrame, vegetation_threshold: int) -> pd.DataFrame:
+    def define_healthy_vegetation(self, DF_crop_rows: pd.DataFrame) -> None:
         """
         Define healthy vegetation based on a threshold
         """
@@ -328,7 +320,6 @@ class Combine_crop_rows:
         w = shapefile.Writer("test_shapefile_healthy_lines")
         w.field("Crop_row", "C")
 
-        
         for crop_row_id in DF_crop_rows["row"].unique():
             crop_row = DF_crop_rows[DF_crop_rows["row"] == crop_row_id]
 
@@ -343,19 +334,19 @@ class Combine_crop_rows:
                 vegetation = crop_row.at[idx, "vegetation"]
 
                 # skip the beginning of the crop row until the first healthy vegetation point is found
-                if not start_found and vegetation <= vegetation_threshold:
+                if not start_found and vegetation <= self.vegetation_threshold:
                     start = idx
                     start_found = True
                     in_healthy_segment = True
                     continue
 
-                if vegetation <= vegetation_threshold:
+                if vegetation <= self.vegetation_threshold:
                     if not in_healthy_segment:
                         #print(f'indexes for crop row {crop_row_id}: start: {start}, middle: {middle}, end: {end}')
                         middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
                         end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
                         distance = np.linalg.norm(middle_point - end_point)
-                        if distance >= 0.2: # arbitrary threshold for minimum length of healthy vegetation segment
+                        if distance >= self.unhealthy_vegetation_length: # arbitrary threshold for minimum length of healthy vegetation segment
                             start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
                             #print("Adding healthy vegetation segment: ", start_point, middle_point)
                             healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
@@ -366,25 +357,22 @@ class Combine_crop_rows:
                 else:
                     if in_healthy_segment:
                         middle = idx - 1
-                    
                     end = idx
 
                     in_healthy_segment = False
-
-            if end != 0 and abs(start - end) > 1:
-                #print(f"ids for crop row {crop_row_id}: start: {start}, middle: {middle}, end: {end}")
-                start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
-                end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
-                #print("End of crop row reached: ", start_point, middle_point, end_point)
+            
+            if start_found:
                 if in_healthy_segment:
+                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                    end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
                     healthy_lines.append([[start_point[0], start_point[1]], [end_point[0], end_point[1]]])
                 else:
+                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                    middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
                     healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
-
             
+            # Write the healthy lines while keeping the crop row id as attribute
             if len(healthy_lines) != 0:
-                #print(f"Healthy segments for crop row {crop_row_id}: ", healthy_lines)
                 w.line(healthy_lines)
                 w.record(int(crop_row_id))
         w.close()
@@ -420,10 +408,12 @@ class Combine_crop_rows:
         print("Time to combine crop rows: ", time.time() - time_start)
 
         time_write_start = time.time()
-        self.merge_all_points_in_all_crop_rows_remove(
+        DF_crop_rows_new = self.merge_all_points_in_all_crop_rows_remove(
             self.ccrc.connected_crop_rows, path_points_in_rows, row_information, tiles
         )
         print("Time to write line points: ", time.time() - time_write_start)
+
+        self.define_healthy_vegetation(DF_crop_rows_new)
 
     def save_statistics(self, stat_path, args, tiles):
         """
