@@ -20,15 +20,31 @@ parser.add_argument(
 )
 parser.add_argument(
     "--output_path_connected_crop_rows",
-    default='connected_crop_rows.csv',
+    default=None,
     type=str,
     help='Path to the output file, containing which crop rows where connected and from which tiles'
+     'This is optional, if not provided, the connected crop rows will not be saved'
 )
 parser.add_argument(
-    "--output_path_line_points",
-    default='line_points.csv',
+    "--output_path_vegetation_points",
+    default=None,
     type=str,
-    help='Path to the output file, containing the points of the connected crop rows'
+    help='Path to the output file, containing the points of the vegetation in the crop rows'
+     'This is optional, if not provided, the vegetation points will not be saved'
+)
+parser.add_argument(
+    "--output_path_healthy_vegetation_segments",
+    default=None,
+    type=str,
+    help='Path to the output file, containing the points of the healthy vegetation in the crop rows'
+     'This is optional, if not provided, the healthy vegetation points will not be saved'
+)
+parser.add_argument(
+    "--output_path_unhealthy_vegetation_segments",
+    default=None,
+    type=str,
+    help='Path to the output file, containing the points of the unhealthy vegetation in the crop rows'
+     'This is optional, if not provided, the unhealthy vegetation points will not be saved'
 )
 parser.add_argument(
     "--angle_tolerance",
@@ -69,7 +85,9 @@ def _main():
     ccr.unhealthy_vegetation_length = args.unhealthy_vegetation_length
     ccr.ccbt.distance_tolerance = args.distance_tolerance
     ccr.output_path_connected_crop_rows = args.output_path_connected_crop_rows
-    ccr.output_path_line_points = args.output_path_line_points
+    ccr.output_path_healthy_vegetation_segments = args.output_path_healthy_vegetation_segments
+    ccr.output_path_unhealthy_vegetation_segments = args.output_path_unhealthy_vegetation_segments
+    ccr.output_path_vegetation_points = args.output_path_vegetation_points
     ccr.max_workers = args.max_workers
     ccr.main(args.path_row_information, args.path_points_in_rows)
 

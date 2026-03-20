@@ -32,21 +32,24 @@ class tile:
 
 
 class Combine_crop_rows:
-    def __init__(self):
+    def __init__(self) -> None:
         self.angle_tolerance = None
         self.vegetation_threshold = None
         self.unhealthy_vegetation_length = None
+
+        # Output paths, if None, the respective output will not be saved
         self.output_path_connected_crop_rows = None
-        self.output_path_line_points = None
+        self.output_path_vegetation_points = None
+        self.output_path_healthy_vegetation_segments = None
+        self.output_path_unhealthy_vegetation_segments = None
+        
 
         self.max_workers = os.cpu_count()
 
         self.ccbt = find_connection_of_rows_between_two_tiles.find_connection_of_rows_between_two_tiles()
-        self.ccrc = (
-            combine_crop_rows_from_connections.combine_crop_rows_from_connections()
-        )
+        self.ccrc = combine_crop_rows_from_connections.combine_crop_rows_from_connections()
 
-    def ensure_parent_directory_exist(self, path: Path):
+    def ensure_parent_directory_exist(self, path: Path) -> None:
         temp_path = path.parent
         if not temp_path.exists():
             temp_path.mkdir(parents=True)
@@ -65,14 +68,7 @@ class Combine_crop_rows:
         Seperate the row information to the different tiles
         """
         tile_numbers = np.unique(row_information[:, 0]).astype(int)
-        # tile_numbers = tile_numbers[tile_numbers <= 1364]
-        # tile_numbers = tile_numbers[tile_numbers >= 1238]
         print("Tile numbers: ", tile_numbers)
-
-        # tile_numbers = [1294, 1295, 1354, 1355]
-        # print("Tile numbers: ", tile_numbers)
-
-        # assert False
 
         tiles = {}
 
@@ -135,7 +131,6 @@ class Combine_crop_rows:
         max = np.max(self.ccrc.connected_crop_rows[:, 0])
         max_idx = [0, 0]
         for i in range(0, int(max) + 1):
-            # print(i, np.count_nonzero(self.ccrc.connected_crop_rows[self.ccrc.connected_crop_rows[:, 0] == i, 0]))
             if (
                 np.count_nonzero(
                     self.ccrc.connected_crop_rows[
@@ -174,7 +169,7 @@ class Combine_crop_rows:
         # else:
         # print(f"Angle difference between tile {tile_1.tile_number} and tile {tile_2.tile_number} is too large")
 
-    def to_csv(self, connected_crop_rows: NDArray[Any]) -> None:
+    def connected_crop_rows_to_csv(self, connected_crop_rows: NDArray[Any]) -> None:
         """
         Write the connected crop rows to a csv file
         """
@@ -260,10 +255,10 @@ class Combine_crop_rows:
         DF_crop_rows_new = DF_crop_rows_new[["row", "x", "y", "vegetation", "duplicate"]]
 
         #self.length_of_all_crop_rows(DF_crop_rows.to_numpy())
-
-        path = self.output_path_line_points
-        self.ensure_parent_directory_exist(Path(path))
-        DF_crop_rows_new.to_csv(path, index=False)
+        if self.output_path_vegetation_points is not None:
+            path = self.output_path_vegetation_points
+            self.ensure_parent_directory_exist(Path(path))
+            DF_crop_rows_new.to_csv(path, index=False)
 
         return DF_crop_rows_new
 
@@ -310,15 +305,18 @@ class Combine_crop_rows:
         print("Low vegetation length: ", length_low_vegetation)
         return total_length
 
-    def define_healthy_vegetation(self, DF_crop_rows: pd.DataFrame) -> None:
+    def seperate_healthy_and_unhealthy_vegetation_segments(self, DF_crop_rows: pd.DataFrame) -> None:
         """
         Define healthy vegetation based on a threshold
         """
-        time_start = time.time()
 
-        
-        w = shapefile.Writer("test_shapefile_healthy_lines")
-        w.field("Crop_row", "C")
+        if self.output_path_healthy_vegetation_segments is not None:
+            writer_healthy = shapefile.Writer(self.output_path_healthy_vegetation_segments)
+            writer_healthy.field("Crop_row", "N")
+
+        if self.output_path_unhealthy_vegetation_segments is not None:
+            writer_unhealthy = shapefile.Writer(self.output_path_unhealthy_vegetation_segments)
+            writer_unhealthy.field("Crop_row", "N")
 
         for crop_row_id in DF_crop_rows["row"].unique():
             crop_row = DF_crop_rows[DF_crop_rows["row"] == crop_row_id]
@@ -329,6 +327,8 @@ class Combine_crop_rows:
             start_found = False
 
             healthy_lines = []
+            unhealthy_lines = []
+
 
             for idx in crop_row.index:
                 vegetation = crop_row.at[idx, "vegetation"]
@@ -338,18 +338,23 @@ class Combine_crop_rows:
                     start = idx
                     start_found = True
                     in_healthy_segment = True
+
+                    # if the first point is not healthy, add the line from the start of the crop row to the first healthy point as unhealthy vegetation
+                    if start != crop_row.index[0]: 
+                        start_point = crop_row[crop_row.index == crop_row.index[0]][["x", "y"]].to_numpy()[0]
+                        middle_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
+                        unhealthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
                     continue
 
                 if vegetation <= self.vegetation_threshold:
                     if not in_healthy_segment:
-                        #print(f'indexes for crop row {crop_row_id}: start: {start}, middle: {middle}, end: {end}')
                         middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
                         end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
                         distance = np.linalg.norm(middle_point - end_point)
-                        if distance >= self.unhealthy_vegetation_length: # arbitrary threshold for minimum length of healthy vegetation segment
+                        if distance >= self.unhealthy_vegetation_length:
                             start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                            #print("Adding healthy vegetation segment: ", start_point, middle_point)
                             healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
+                            unhealthy_lines.append([[middle_point[0], middle_point[1]], [end_point[0], end_point[1]]])
 
                             start = idx
 
@@ -370,15 +375,24 @@ class Combine_crop_rows:
                     start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
                     middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
                     healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
+                    end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
+                    unhealthy_lines.append([[middle_point[0], middle_point[1]], [end_point[0], end_point[1]]])
             
-            # Write the healthy lines while keeping the crop row id as attribute
+            # Write the healthy and unhealthy lines while keeping the crop row id as attribute
             if len(healthy_lines) != 0:
-                w.line(healthy_lines)
-                w.record(int(crop_row_id))
-        w.close()
+                if self.output_path_healthy_vegetation_segments is not None:
+                    writer_healthy.line(healthy_lines)
+                    writer_healthy.record(int(crop_row_id))
+            if len(unhealthy_lines) != 0:
+                if self.output_path_unhealthy_vegetation_segments is not None:
+                    writer_unhealthy.line(unhealthy_lines)
+                    writer_unhealthy.record(int(crop_row_id))
+            
+        if self.output_path_healthy_vegetation_segments is not None:
+            writer_healthy.close()
+        if self.output_path_unhealthy_vegetation_segments is not None:
+            writer_unhealthy.close()
 
-        print(f"Time to define healthy vegetation: {time.time() - time_start} seconds")
- 
             
                 
 
@@ -403,9 +417,11 @@ class Combine_crop_rows:
         self.ccrc.check_dublicates()
 
         print("Time to add unused rows: ", time.time() - time_start)
-        time_start = time.time()
-        self.to_csv(self.ccrc.connected_crop_rows)
-        print("Time to combine crop rows: ", time.time() - time_start)
+        
+        if self.output_path_connected_crop_rows is not None:
+            time_start = time.time()
+            self.connected_crop_rows_to_csv(self.ccrc.connected_crop_rows)
+            print("Time to combine crop rows: ", time.time() - time_start)
 
         time_write_start = time.time()
         DF_crop_rows_new = self.merge_all_points_in_all_crop_rows_remove(
@@ -413,7 +429,10 @@ class Combine_crop_rows:
         )
         print("Time to write line points: ", time.time() - time_write_start)
 
-        self.define_healthy_vegetation(DF_crop_rows_new)
+        if self.output_path_healthy_vegetation_segments is not None or self.output_path_unhealthy_vegetation_segments is not None:
+            time_start = time.time()
+            self.seperate_healthy_and_unhealthy_vegetation_segments(DF_crop_rows_new)
+            print("Time to seperate healthy and unhealthy vegetation segments: ", time.time() - time_start)
 
     def save_statistics(self, stat_path, args, tiles):
         """
