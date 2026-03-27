@@ -142,7 +142,6 @@ class combine_crop_rows_from_connections:
         # Check for duplicates in the first two columns (crop row index and tile number)
         DF_row_idx_tile = pd.DataFrame(self.connected_crop_rows[:, :2], columns=["crop_row_index", "tile_number"])
         duplicates = DF_row_idx_tile.duplicated(keep=False)
-        duplicates = duplicates.replace({True: 1, False: 0})
 
         self.connected_crop_rows[:,11] = duplicates
 

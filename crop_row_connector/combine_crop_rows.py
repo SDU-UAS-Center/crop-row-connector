@@ -10,7 +10,6 @@ from pathlib import Path  # type: ignore
 
 # from icecream import ic # type: ignore
 from tqdm import tqdm  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
 
 import crop_row_connector.find_connection_of_rows_between_two_tiles as find_connection_of_rows_between_two_tiles
 import crop_row_connector.combine_crop_rows_from_connections as combine_crop_rows_from_connections
@@ -19,9 +18,18 @@ import crop_row_connector._native as mpro
 
 import shapefile  # type: ignore
 
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"Time taken by {func.__name__}: {(end_time - start_time):.4f} seconds")
+        return result
+    return wrapper
+
 class tile:
     def __init__(
-        self, tile_number: int, position: list[float], angle: float, rows: NDArray[Any]
+        self, tile_number: int, position: list[float], angle: float, rows: NDArray[np.float64]
     ) -> None:
         self.tile_number = tile_number
         self.position = position
@@ -50,23 +58,60 @@ class Combine_crop_rows:
         self.ccrc = combine_crop_rows_from_connections.combine_crop_rows_from_connections()
 
     def ensure_parent_directory_exist(self, path: Path) -> None:
-        temp_path = path.parent
-        if not temp_path.exists():
-            temp_path.mkdir(parents=True)
+        """
+        Ensure the parent directory of `path` exists.
 
-    def load_csv(self, path: str) -> NDArray[Any]:
+        Notes:
+        - Only creates directories if they do not already exist.
+
+        Parameters
+        ----------
+        path : Path
+            The path for which to ensure the parent directory exists.
         """
-        Load the csv file containing the row information
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+    def load_csv(self, path: str) -> NDArray[np.float64]:
         """
-        row_information = pd.read_csv(path).to_numpy()
-        return row_information
+        Load a CSV file containing row information into a NumPy array.
+
+        Notes:
+        - Each row corresponds to a crop row.
+        - Columns contain:
+            [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
+        
+        Parameters
+        ----------
+        path : str
+            The file path to the CSV file containing row information.
+
+        Returns
+        -------
+        NDArray[np.float64]
+            2D array where each row corresponds to a crop row.
+        """
+
+        return pd.read_csv(path).to_numpy(dtype=np.float64)
 
     def seperate_row_information_to_tile(
-        self, row_information: NDArray[Any]
+        self, row_information: NDArray[np.float64]
     ) -> dict[int, tile]:
         """
-        Seperate the row information to the different tiles
+        Split row information into tile objects keyed by tile number.
+
+        Parameters
+        ----------
+        row_information : NDArray[np.float64]
+            A NumPy array containing row information for all tiles. Each row corresponds to a crop row and contains the following columns:
+            [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
+
+        Returns
+        -------
+        dict[int, tile]
+            Dictionary mapping each tile number to a tile object.
         """
+
         tile_numbers = np.unique(row_information[:, 0]).astype(int)
         print("Tile numbers: ", tile_numbers)
 
@@ -83,81 +128,104 @@ class Combine_crop_rows:
         return tiles
 
     def create_tile_grid(
-        self, row_information: NDArray[Any], tiles: dict[int, tile]
-    ) -> NDArray[Any]:
+        self, row_information: NDArray[np.float64], tiles: dict[int, tile]
+    ) -> NDArray[np.int32]:
         """
-        Create a grid containing the tile numbers in their respective position and -1 for no tile
-        """
-        tile_grid_size = np.amax(row_information[:, 1:3], axis=0)
+        Create a 2D grid of tile numbers in their respective positions, with -1 for empty cells.
 
-        grid = np.negative(
-            np.ones((int(tile_grid_size[0] + 2), int(tile_grid_size[1] + 2)))
-        )
+        Notes:
+        - X indexes columns, Y indexes rows (grid[y, x])
+        - The grid is padded by 1 row and 1 column to simplify neighbor connections.
+        
+        Parameters
+        ----------
+        row_information : np.ndarray
+            2D array with row information including tile positions.
+        tiles : dict[int, tile]
+            Dictionary mapping tile numbers to tile objects.
+        
+        Returns
+        -------
+        np.ndarray
+            2D array where each cell contains a tile number if present, otherwise -1.
+        """
+
+        tile_grid_size = np.amax(row_information[:, 1:3], axis=0).astype(int)
+
+        grid = np.full((tile_grid_size[0] + 2, tile_grid_size[1] + 2), -1, dtype=np.int32)
 
         for tile in tiles.values():
             grid[tile.position[0], tile.position[1]] = tile.tile_number
 
         return grid
 
-    def connect_rows_in_tiles(self, grid: NDArray[Any], tiles: dict[int, tile]) -> None:
+    def connect_rows_in_tiles(self, grid: NDArray[np.int32], tiles: dict[int, tile]) -> None:
         """
-        Finds and connects the crop rows in the tiles
+        Connect crop rows across neighboring tiles in the grid.
+
+        For each tile in the grid:
+        - Connect to its right neighbor (if any)
+        - Connect to its bottom neighbor (if any)
+
+        After all connections are made:
+        - Add any uncombined rows to the connected crop rows
+
+        Parameters
+        ----------
+        grid : np.ndarray[int32]
+            2D array representing the tile grid. Each entry is a tile number, or -1 for empty cells.
+        tiles : dict[int, tile]
+            Dictionary mapping tile numbers to tile objects.
         """
 
-        # x is indexing the columns and y is indexing the rows
+        # Find all positions in the grid that contain a tile
+        ys, xs = np.where(grid != -1) #
         for y, x in tqdm(
-            np.ndindex(grid.shape),
-            total=grid.shape[0] * grid.shape[1],
+            zip(ys, xs),
+            total=len(ys),
             desc="Connecting rows in tiles",
             unit="tiles",
         ):
-            tile_current = tiles.get(grid[y, x])
-            if tile_current is not None:
-                # Connect tile to the right
-                tile_right = tiles.get(grid[y, x + 1])
-                if tile_right is not None:
-                    self.connect_2_tiles(tile_current, tile_right)
+            tile_current = tiles[grid[y, x]]
+            
+            # Connect tile to the right
+            tile_right_num = grid[y, x + 1]
+            if tile_right_num != -1:
+                self.connect_2_tiles(tile_current, tiles[tile_right_num])
 
-                # connect tile below
-                tile_below = tiles.get(grid[y + 1, x])
-                if tile_below is not None:
-                    self.connect_2_tiles(tile_current, tile_below)
+            # connect tile below
+            tile_below_num = grid[y + 1, x]
+            if tile_below_num != -1:
+                self.connect_2_tiles(tile_current, tiles[tile_below_num])
 
         print("removed connections: ", self.ccbt.removed_connections)
         print("removed padded connections: ", self.ccbt.removed_padded_connections)
         print("full connections", self.ccrc.connecting_full)
         print("connections", self.ccrc.connections)
 
-        max = np.max(self.ccrc.connected_crop_rows[:, 0])
-        max_idx = [0, 0]
-        for i in range(0, int(max) + 1):
-            if (
-                np.count_nonzero(
-                    self.ccrc.connected_crop_rows[
-                        self.ccrc.connected_crop_rows[:, 0] == i, 0
-                    ]
-                )
-                > max_idx[1]
-            ):
-                max_idx = [
-                    i,
-                    np.count_nonzero(
-                        self.ccrc.connected_crop_rows[
-                            self.ccrc.connected_crop_rows[:, 0] == i, 0
-                        ]
-                    ),
-                ]
-        print("crop row with most connections: ", max_idx)
+        # Compute which crop row has the most connections
+        # connected_crop_rows[:, 0] contains the row IDs
+        counts = np.bincount(self.ccrc.connected_crop_rows[:, 0].astype(int))
+        max_row_id = np.argmax(counts)
+        max_connections = counts[max_row_id]
+
+        print(f"Crop row with most connections: {max_row_id} with {max_connections} connections")
 
         # add the uncombined rows to the connected crop rows
         self.ccrc.add_unused_rows(tiles)
 
-    def connect_2_tiles(self, tile_1: tile | None, tile_2: tile | None) -> None:
+    def connect_2_tiles(self, tile_1: tile, tile_2: tile) -> None:
         """
-        Connect two tiles together
+        Connect two tiles by linking crop rows if their angles are within the allowed tolerance.
+
+        Parameters
+        ----------
+        tile_1 : tile
+            The first tile object to connect.
+        tile_2 : tile
+            The second tile object to connect.
         """
-        assert tile_1 is not None
-        assert tile_2 is not None
+
         # Check if the angle of the two tiles is close enough
         if math.isclose(tile_1.angle, tile_2.angle, abs_tol=self.angle_tolerance):
             connections = self.ccbt.calculate_connections_between_2_tiles(
@@ -166,12 +234,16 @@ class Combine_crop_rows:
             self.ccrc.connect_crop_rows_of_2_tiles(
                 tile_1.tile_number, tile_2.tile_number, connections
             )
-        # else:
-        # print(f"Angle difference between tile {tile_1.tile_number} and tile {tile_2.tile_number} is too large")
+
 
     def connected_crop_rows_to_csv(self, connected_crop_rows: NDArray[Any]) -> None:
         """
         Write the connected crop rows to a csv file
+
+        Parameters
+        ----------
+        connected_crop_rows : np.ndarray
+            2D array containing connected crop row information. 
         """
         # Write the connected crop rows to a csv file
         DF_connected_crop_rows = pd.DataFrame(
@@ -203,7 +275,24 @@ class Combine_crop_rows:
         tiles: dict[int, tile],
     ) -> pd.DataFrame:
         """
-        Merge all points in all crop rows
+        Merge all points from connected crop rows into a single DataFrame,
+        removing overlapping points based on a distance tolerance.
+
+        Parameters
+        ----------
+        connected_crop_rows : np.ndarray
+            2D array containing connected crop row information.
+        path_points_in_rows : str
+            Path to CSV containing raw vegetation points per row.
+        row_information : np.ndarray
+            Original row information array.
+        tiles : dict[int, tile]
+            Dictionary mapping tile numbers to tile objects.
+
+        Returns
+        -------
+        pd.DataFrame
+            Merged and sorted crop rows including vegetation and duplicate information.
         """
 
         DF_vegetation_rows = pd.read_csv(path_points_in_rows)
@@ -234,21 +323,20 @@ class Combine_crop_rows:
         )
 
         DF_crop_rows_new = pd.DataFrame(columns=DF_crop_rows.columns)
+        rows = []
         # sort the crop rows by coordinates
-        for crop_row_id in DF_crop_rows["crop_row"].unique():
-            tile_number = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id]["tile"].mode()[0]
+        for crop_row_id, subset in DF_crop_rows.groupby("crop_row"):
+            tile_number = subset["tile"].mode()[0]
             angle = tiles[tile_number].angle
 
-            crop_row = DF_crop_rows[DF_crop_rows["crop_row"] == crop_row_id].copy()
             if angle < math.pi / 4 or angle > 3 * math.pi / 4:
-                # sort by y coordinate
-                crop_row = crop_row.sort_values(by=["y", "x"])
+                crop_row = subset.sort_values(by=["y", "x"])
             else:
-                # sort by x coordinate
-                crop_row = crop_row.sort_values(by=["x", "y"])
+                crop_row = subset.sort_values(by=["x", "y"])
 
-            DF_crop_rows_new = pd.concat([DF_crop_rows_new, crop_row], ignore_index=True)
+            rows.append(crop_row)
 
+        DF_crop_rows_new = pd.concat(rows, ignore_index=True)
 
         DF_crop_rows_new = DF_crop_rows_new.drop(columns=["tile", "row"])
         DF_crop_rows_new = DF_crop_rows_new.rename(columns={"crop_row": "row"})
@@ -397,42 +485,31 @@ class Combine_crop_rows:
                 
 
     def main(self, path_row_information: str, path_points_in_rows: str) -> None:
-        time_start = time.time()
-        row_information = self.load_csv(path_row_information)
-        print("Time to load csv: ", time.time() - time_start)
-        time_start = time.time()
-        tiles = self.seperate_row_information_to_tile(row_information)
-        # tiles = tiles[0:10]
-        print("Time to seperate row information to tile: ", time.time() - time_start)
-        time_start = time.time()
-        grid = self.create_tile_grid(row_information, tiles)
-        print("Time to create tile grid: ", time.time() - time_start)
-        time_start = time.time()
-        self.connect_rows_in_tiles(grid, tiles)
-        print("Time to connect rows in tiles: ", time.time() - time_start)
-        time_start = time.time()
 
-        self.ccrc.sort_connected_crop_rows()
+        row_information = timeit(self.load_csv)(path_row_information)
+        
+        tiles = timeit(self.seperate_row_information_to_tile)(row_information)
+        
+        grid = timeit(self.create_tile_grid)(row_information, tiles)
+        
+        timeit(self.connect_rows_in_tiles)(grid, tiles)
+        
 
-        self.ccrc.check_dublicates()
+        timeit(self.ccrc.sort_connected_crop_rows)()
 
-        print("Time to add unused rows: ", time.time() - time_start)
+        timeit(self.ccrc.check_dublicates)()
+
         
         if self.output_path_connected_crop_rows is not None:
-            time_start = time.time()
-            self.connected_crop_rows_to_csv(self.ccrc.connected_crop_rows)
-            print("Time to combine crop rows: ", time.time() - time_start)
+            timeit(self.connected_crop_rows_to_csv)(self.ccrc.connected_crop_rows)
+            
 
-        time_write_start = time.time()
-        DF_crop_rows_new = self.merge_all_points_in_all_crop_rows_remove(
+        DF_crop_rows_new = timeit(self.merge_all_points_in_all_crop_rows_remove)(
             self.ccrc.connected_crop_rows, path_points_in_rows, row_information, tiles
         )
-        print("Time to write line points: ", time.time() - time_write_start)
 
         if self.output_path_healthy_vegetation_segments is not None or self.output_path_unhealthy_vegetation_segments is not None:
-            time_start = time.time()
-            self.seperate_healthy_and_unhealthy_vegetation_segments(DF_crop_rows_new)
-            print("Time to seperate healthy and unhealthy vegetation segments: ", time.time() - time_start)
+            timeit(self.seperate_healthy_and_unhealthy_vegetation_segments)(DF_crop_rows_new)
 
     def save_statistics(self, stat_path, args, tiles):
         """

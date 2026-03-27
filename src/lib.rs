@@ -135,7 +135,6 @@ mod rust_fn {
         This is handled in a multithreaded manner. 
         */
 
-        let start_total = Instant::now();
 
         rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().unwrap();
 
@@ -156,7 +155,6 @@ mod rust_fn {
         });
         pb.finish_with_message("Processing complete");
 
-        println!("total time: {}", start_total.elapsed().as_millis());
         let merged_rows = Arc::try_unwrap(merged_rows).unwrap().into_inner().unwrap();
 
         // Stack rows back into an Array2
