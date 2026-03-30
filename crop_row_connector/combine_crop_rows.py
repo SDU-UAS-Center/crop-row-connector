@@ -299,13 +299,16 @@ class Combine_crop_rows:
 
         tolerance = self.ccbt.distance_tolerance / 10
 
-        start_time = time.time()
-        crop_rows = mpro.merge_points_removing_overlap(connected_crop_rows.astype(np.float64), DF_vegetation_rows.to_numpy(), row_information, tolerance, self.max_workers)
+        crop_rows = timeit(mpro.merge_points_removing_overlap)(
+            connected_crop_rows.astype(np.float64), 
+            DF_vegetation_rows.to_numpy(), 
+            row_information, 
+            tolerance, 
+            self.max_workers
+        )
 
-        print("time to run loop: ", time.time() - start_time)
 
         DF_crop_rows = pd.DataFrame(crop_rows, columns=DF_vegetation_rows.columns)
-
         DF_crop_rows["vegetation"] = DF_crop_rows["vegetation"].astype(int)
 
         DF_connected_crop_rows = pd.DataFrame(
