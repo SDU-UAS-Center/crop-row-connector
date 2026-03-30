@@ -328,8 +328,8 @@ class Combine_crop_rows:
         DF_crop_rows_new = pd.DataFrame(columns=DF_crop_rows.columns)
         rows = []
         # sort the crop rows by coordinates
-        for crop_row_id, subset in DF_crop_rows.groupby("crop_row"):
-            tile_number = subset["tile"].mode()[0]
+        for crop_row_id, subset in DF_crop_rows.groupby("crop_row", sort=False):
+            tile_number = subset["tile"].iat[0]
             angle = tiles[tile_number].angle
 
             if angle < math.pi / 4 or angle > 3 * math.pi / 4:
