@@ -341,11 +341,16 @@ class Combine_crop_rows:
 
         DF_crop_rows_new = pd.concat(rows, ignore_index=True)
 
-        DF_crop_rows_new = DF_crop_rows_new.drop(columns=["tile", "row"])
-        DF_crop_rows_new = DF_crop_rows_new.rename(columns={"crop_row": "row"})
-        DF_crop_rows_new = DF_crop_rows_new[["row", "x", "y", "vegetation", "duplicate"]]
+        DF_crop_rows_new = (
+            DF_crop_rows_new
+            .drop(columns=["tile", "row"])
+            .rename(columns={"crop_row": "row"})
+            [["row", "x", "y", "vegetation", "duplicate"]]
+        )
 
-        #self.length_of_all_crop_rows(DF_crop_rows.to_numpy())
+        timeit(self.length_of_all_crop_rows)(DF_crop_rows.to_numpy())
+        timeit(self.length_of_all_crop_rows_vec)(DF_crop_rows.to_numpy())
+
         if self.output_path_vegetation_points is not None:
             path = self.output_path_vegetation_points
             self.ensure_parent_directory_exist(Path(path))
