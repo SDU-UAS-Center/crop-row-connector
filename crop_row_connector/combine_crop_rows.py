@@ -348,9 +348,6 @@ class Combine_crop_rows:
             [["row", "x", "y", "vegetation", "duplicate"]]
         )
 
-        timeit(self.length_of_all_crop_rows)(DF_crop_rows.to_numpy())
-        timeit(self.length_of_all_crop_rows_vec)(DF_crop_rows.to_numpy())
-
         if self.output_path_vegetation_points is not None:
             path = self.output_path_vegetation_points
             self.ensure_parent_directory_exist(Path(path))
@@ -358,183 +355,16 @@ class Combine_crop_rows:
 
         return DF_crop_rows_new
 
-    def length_of_all_crop_rows(self, crop_rows: NDArray[Any]) -> float:
-        """
-        Calculate the length of all crop rows
-        """
-
-        total_time = 0.0
-
-        length_low_vegetation = 0.0
-        length_high_vegetation = 0.0
-
-        total_field_length = 0.0
-        total_length = 0.0
-        curr_id = 0
-        for i in range(len(crop_rows)-1):
-            if crop_rows[i, 0] != curr_id:
-                #print("Length of crop row ", curr_id, ": ", total_length)
-                curr_id = crop_rows[i, 0]
-                total_field_length += total_length
-                total_length = 0.0
-                #assert False
-
-            next_row = crop_rows[i + 1]
-
-            time_start = time.time()
-            length = np.linalg.norm(
-                np.array([crop_rows[i, 1], crop_rows[i, 2]])
-                - np.array([next_row[1], next_row[2]])
-            )
-
-            total_time += time.time() - time_start
-            if length < self.ccbt.distance_tolerance:
-                total_length += length
-                if crop_rows[i, 3] < 20: # arbitrary threshold for low vegetation
-                    length_low_vegetation += length
-                else:
-                    length_high_vegetation += length
-        total_field_length += total_length
-        print("Time to calculate length of all crop rows: ", total_time)
-        print("Total length of all crop rows: ", total_field_length)
-        print("Healthy vegetation length: ", length_high_vegetation)
-        print("Low vegetation length: ", length_low_vegetation)
-        return total_length
-    
-    def length_of_all_crop_rows_vec(self, crop_rows: NDArray[Any]) -> float:
-        """
-        Calculate total length of crop rows and vegetation-based segments.
-
-        Notes:
-        - Uses Euclidean distance between consecutive points.
-        - Filters using distance tolerance.
-
-        Parameters
-        ----------
-        crop_rows : np.ndarray
-
-        Returns
-        -------
-        float
-            Total length of the last crop row.
-        """
-        coords = crop_rows[:, 1:3].astype(np.float64)
-
-        # Vectorized distance calculation
-        diffs = coords[1:] - coords[:-1]
-        distances = np.linalg.norm(diffs, axis=1)
-
-        mask = distances < self.ccbt.distance_tolerance
-
-        vegetation = crop_rows[:-1, 3]
-
-        length_low = distances[(mask) & (vegetation < 20)].sum()
-        length_high = distances[(mask) & (vegetation >= 20)].sum()
-
-        total_length = distances[mask].sum()
-
-        print("Total length:", total_length)
-        print("Healthy vegetation length:", length_high)
-        print("Low vegetation length:", length_low)
-
-        return total_length
-
-    def seperate_healthy_and_unhealthy_vegetation_segments(self, DF_crop_rows: pd.DataFrame) -> None:
-        """
-        Define healthy vegetation based on a threshold
-        """
-
-        if self.output_path_healthy_vegetation_segments is not None:
-            writer_healthy = shapefile.Writer(self.output_path_healthy_vegetation_segments)
-            writer_healthy.field("Crop_row", "N")
-
-        if self.output_path_unhealthy_vegetation_segments is not None:
-            writer_unhealthy = shapefile.Writer(self.output_path_unhealthy_vegetation_segments)
-            writer_unhealthy.field("Crop_row", "N")
-
-        for crop_row_id in DF_crop_rows["row"].unique():
-            crop_row = DF_crop_rows[DF_crop_rows["row"] == crop_row_id]
-
-            start, middle, end = 0, 0, 0
-            in_healthy_segment = False
-
-            start_found = False
-
-            healthy_lines = []
-            unhealthy_lines = []
-
-
-            for idx in crop_row.index:
-                vegetation = crop_row.at[idx, "vegetation"]
-
-                # skip the beginning of the crop row until the first healthy vegetation point is found
-                if not start_found and vegetation <= self.vegetation_threshold:
-                    start = idx
-                    start_found = True
-                    in_healthy_segment = True
-
-                    # if the first point is not healthy, add the line from the start of the crop row to the first healthy point as unhealthy vegetation
-                    if start != crop_row.index[0]: 
-                        start_point = crop_row[crop_row.index == crop_row.index[0]][["x", "y"]].to_numpy()[0]
-                        middle_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                        unhealthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
-                    continue
-
-                if vegetation <= self.vegetation_threshold:
-                    if not in_healthy_segment:
-                        middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
-                        end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
-                        distance = np.linalg.norm(middle_point - end_point)
-                        if distance >= self.unhealthy_vegetation_length:
-                            start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                            healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
-                            unhealthy_lines.append([[middle_point[0], middle_point[1]], [end_point[0], end_point[1]]])
-
-                            start = idx
-
-                    in_healthy_segment = True
-                else:
-                    if in_healthy_segment:
-                        middle = idx - 1
-                    end = idx
-
-                    in_healthy_segment = False
-            
-            if start_found:
-                if in_healthy_segment:
-                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                    end_point = crop_row[crop_row.index == crop_row.index[-1]][["x", "y"]].to_numpy()[0]
-                    healthy_lines.append([[start_point[0], start_point[1]], [end_point[0], end_point[1]]])
-                else:
-                    start_point = crop_row[crop_row.index == start][["x", "y"]].to_numpy()[0]
-                    middle_point = crop_row[crop_row.index == middle][["x", "y"]].to_numpy()[0]
-                    healthy_lines.append([[start_point[0], start_point[1]], [middle_point[0], middle_point[1]]])
-                    end_point = crop_row[crop_row.index == end][["x", "y"]].to_numpy()[0]
-                    unhealthy_lines.append([[middle_point[0], middle_point[1]], [end_point[0], end_point[1]]])
-            
-            # Write the healthy and unhealthy lines while keeping the crop row id as attribute
-            if len(healthy_lines) != 0:
-                if self.output_path_healthy_vegetation_segments is not None:
-                    writer_healthy.line(healthy_lines)
-                    writer_healthy.record(int(crop_row_id))
-            if len(unhealthy_lines) != 0:
-                if self.output_path_unhealthy_vegetation_segments is not None:
-                    writer_unhealthy.line(unhealthy_lines)
-                    writer_unhealthy.record(int(crop_row_id))
-            
-        if self.output_path_healthy_vegetation_segments is not None:
-            writer_healthy.close()
-        if self.output_path_unhealthy_vegetation_segments is not None:
-            writer_unhealthy.close()
-
-    def separate_healthy_and_unhealthy_vegetation_segments_new(self, DF_crop_rows: pd.DataFrame) -> None:
+    def separate_healthy_and_unhealthy_vegetation_segments(
+        self, DF_crop_rows: pd.DataFrame
+    ) -> list[dict]:
         """
         Define healthy and unhealthy vegetation segments and optionally write them to shapefiles.
 
         Notes:
         - Uses self.vegetation_threshold to separate healthy from unhealthy vegetation.
-        - Operates on NumPy arrays for performance (avoids DataFrame indexing in loops).
         - Each segment is represented as a line between two points.
+        - Returns segments so they can be reused for further analysis (e.g. length calculation).
         - X indexes columns, Y indexes rows (DF_crop_rows['x'], DF_crop_rows['y']).
 
         Parameters
@@ -544,11 +374,15 @@ class Combine_crop_rows:
 
         Returns
         -------
-        None
-            Writes shapefiles if output paths are provided.
+        list[dict]
+            List of segment dictionaries:
+            {
+                "row_id": int,
+                "healthy": list[[[x1, y1], [x2, y2]]],
+                "unhealthy": list[[[x1, y1], [x2, y2]]]
+            }
         """
 
-        # Initialize shapefile writers
         writer_healthy = None
         writer_unhealthy = None
 
