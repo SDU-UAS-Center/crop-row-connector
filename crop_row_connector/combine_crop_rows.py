@@ -394,10 +394,10 @@ class Combine_crop_rows:
             writer_unhealthy = shapefile.Writer(self.output_path_unhealthy_vegetation_segments)
             writer_unhealthy.field("Crop_row", "N")
 
-        # Group once (avoid repeated filtering)
+        segments = []
+
         for crop_row_id, crop_row in DF_crop_rows.groupby("row", sort=False):
 
-            # 🚀 Convert once to NumPy (major speedup)
             coords = crop_row[["x", "y"]].to_numpy(dtype=np.float64)
             vegetation = crop_row["vegetation"].to_numpy()
 
@@ -418,18 +418,13 @@ class Combine_crop_rows:
             for i in range(n):
                 veg = vegetation[i]
 
-                # Find first healthy segment start
                 if not start_found and veg <= self.vegetation_threshold:
                     start = i
                     start_found = True
                     in_healthy_segment = True
 
-                    # Handle initial unhealthy segment
                     if i != 0:
-                        unhealthy_lines.append([
-                            coords[0].tolist(),
-                            coords[i].tolist()
-                        ])
+                        unhealthy_lines.append([coords[0].tolist(), coords[i].tolist()])
                     continue
 
                 if veg <= self.vegetation_threshold:
@@ -437,17 +432,13 @@ class Combine_crop_rows:
                         middle_point = coords[middle]
                         end_point = coords[end]
 
-                        distance = np.linalg.norm(middle_point - end_point)
+                        dx = middle_point[0] - end_point[0]
+                        dy = middle_point[1] - end_point[1]
+                        distance = math.hypot(dx, dy)
 
                         if distance >= self.unhealthy_vegetation_length:
-                            healthy_lines.append([
-                                coords[start].tolist(),
-                                middle_point.tolist()
-                            ])
-                            unhealthy_lines.append([
-                                middle_point.tolist(),
-                                end_point.tolist()
-                            ])
+                            healthy_lines.append([coords[start].tolist(), middle_point.tolist()])
+                            unhealthy_lines.append([middle_point.tolist(), end_point.tolist()])
                             start = i
 
                     in_healthy_segment = True
@@ -463,24 +454,24 @@ class Combine_crop_rows:
                 start_point = coords[start]
 
                 if in_healthy_segment:
-                    healthy_lines.append([
-                        start_point.tolist(),
-                        coords[-1].tolist()
-                    ])
+                    healthy_lines.append([start_point.tolist(), coords[-1].tolist()])
                 else:
                     middle_point = coords[middle]
                     end_point = coords[end]
+                    if math.isnan(end_point.tolist()[0]) or math.isnan(end_point.tolist()[1]):
+                        end_point = coords[end-1]
 
-                    healthy_lines.append([
-                        start_point.tolist(),
-                        middle_point.tolist()
-                    ])
-                    unhealthy_lines.append([
-                        middle_point.tolist(),
-                        end_point.tolist()
-                    ])
+                    healthy_lines.append([start_point.tolist(), middle_point.tolist()])
+                    unhealthy_lines.append([middle_point.tolist(), end_point.tolist()])
 
-            # Write results
+            # Save segments for later use
+            segments.append({
+                "row_id": int(crop_row_id),
+                "healthy": healthy_lines,
+                "unhealthy": unhealthy_lines,
+            })
+
+            # Write shapefiles if enabled
             if healthy_lines and writer_healthy is not None:
                 writer_healthy.line(healthy_lines)
                 writer_healthy.record(int(crop_row_id))
@@ -489,15 +480,68 @@ class Combine_crop_rows:
                 writer_unhealthy.line(unhealthy_lines)
                 writer_unhealthy.record(int(crop_row_id))
 
-        # Close writers
         if writer_healthy is not None:
             writer_healthy.close()
-
         if writer_unhealthy is not None:
             writer_unhealthy.close()
 
-            
-                
+        return segments
+
+    def length_of_segments(self, segments: list[dict]) -> tuple[float, float, float]:
+        """
+        Calculate total lengths of healthy and unhealthy vegetation segments.
+
+        Notes:
+        - Uses segment endpoints instead of point-to-point distances.
+        - Each segment is treated as a straight line.
+
+        Parameters
+        ----------
+        segments : list[dict]
+            Output from separate_healthy_and_unhealthy_vegetation_segments.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            (total_length, healthy_length, unhealthy_length)
+        """
+
+        total_length = 0.0
+        healthy_length = 0.0
+        unhealthy_length = 0.0
+
+        for row in segments:
+
+            # Healthy segments
+            for seg in row["healthy"]:
+                #print("Healthy segment: ", seg)
+                dx = seg[0][0] - seg[1][0]
+                dy = seg[0][1] - seg[1][1]
+                length = math.hypot(dx, dy)
+
+                healthy_length += length
+                total_length += length
+
+            # Unhealthy segments
+            for seg in row["unhealthy"]:
+                #print("Unhealthy segment: ", seg)
+                dx = seg[0][0] - seg[1][0]
+                dy = seg[0][1] - seg[1][1]
+                length = math.hypot(dx, dy)
+
+                unhealthy_length += length
+                total_length += length
+
+        if math.isnan(unhealthy_length):
+            print("!!!!!! length is nan")
+
+        print("Total length:", total_length)
+        print("Healthy vegetation length:", healthy_length)
+        print("Unhealthy vegetation length:", unhealthy_length)
+
+        return total_length, healthy_length, unhealthy_length
+
+
 
     def main(self, path_row_information: str, path_points_in_rows: str) -> None:
 
