@@ -418,16 +418,17 @@ class Combine_crop_rows:
             for i in range(n):
                 veg = vegetation[i]
 
-                if not start_found and veg <= self.vegetation_threshold:
+                if not start_found and veg >= self.vegetation_threshold:
                     start = i
                     start_found = True
                     in_healthy_segment = True
 
                     if i != 0:
                         unhealthy_lines.append([coords[0].tolist(), coords[i].tolist()])
+                        print("Unhealthy segment at start of row: ", [coords[0].tolist(), coords[i].tolist()])
                     continue
 
-                if veg <= self.vegetation_threshold:
+                if veg >= self.vegetation_threshold:
                     if not in_healthy_segment:
                         middle_point = coords[middle]
                         end_point = coords[end]
@@ -463,6 +464,8 @@ class Combine_crop_rows:
 
                     healthy_lines.append([start_point.tolist(), middle_point.tolist()])
                     unhealthy_lines.append([middle_point.tolist(), end_point.tolist()])
+            else: 
+                unhealthy_lines.append([coords[0].tolist(), coords[-1].tolist()])
 
             # Save segments for later use
             segments.append({
@@ -568,8 +571,9 @@ class Combine_crop_rows:
         )
 
         if self.output_path_healthy_vegetation_segments is not None or self.output_path_unhealthy_vegetation_segments is not None:
-            #timeit(self.seperate_healthy_and_unhealthy_vegetation_segments)(DF_crop_rows_new)
-            timeit(self.separate_healthy_and_unhealthy_vegetation_segments)(DF_crop_rows_new)
+            segments = timeit(self.separate_healthy_and_unhealthy_vegetation_segments)(DF_crop_rows_new)
+
+        timeit(self.length_of_segments)(segments)
 
     def save_statistics(self, stat_path, args, tiles):
         """

@@ -60,7 +60,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--vegetation_threshold",
-    default=20,
+    default=127,
     type=float,
     help='Vegetation threshold for a point to be considered healthy vegetation'
 )
