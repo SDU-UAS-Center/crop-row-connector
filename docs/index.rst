@@ -11,3 +11,7 @@ Installation
 *crop-row-connector* is a combined rust and python package. 
 It can be installed by following the instructions in the :ref:`installation <installation>` section.
 
+Tutorials
+=========
+The :ref:`tutorials <tutorials>` section provides step-by-step guides on how to use *crop-row-connector* with example datasets, including how to run the provided test data.
+
