@@ -50,25 +50,25 @@ parser.add_argument(
     "--angle_tolerance",
     default=0.1,
     type=float,
-    help='Angle tolerance for two crop rows to be connected'
+    help='Angle tolerance for two crop rows to be connected. Measured in radians.'
 )
 parser.add_argument(
     "--distance_tolerance",
     default=0.1,
     type=float,
-    help='Distance tolerance for two crop rows to be connected'
+    help='Distance tolerance for two crop rows to be connected. Measured in meters.'
 )
 parser.add_argument(
     "--vegetation_threshold",
     default=127,
     type=float,
-    help='Vegetation threshold for a point to be considered healthy vegetation'
+    help='Vegetation threshold for a point to be considered healthy vegetation. Measured in grayscale values from 0 to 255.'
 )
 parser.add_argument(
-    "--unhealthy_vegetation_length",
+    "--min_unhealthy_vegetation_length",
     default=0.1,
     type=float,
-    help="Length tolerance for unhealthy vegetation in the crop rows"
+    help="Minimum length tolerance for unhealthy vegetation in the crop rows, to be considered as a segment of unhealthy vegetation. Measured in meters."
 )
 parser.add_argument(
     "--max_workers",
