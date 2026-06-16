@@ -572,8 +572,7 @@ class Combine_crop_rows:
 
         if self.output_path_healthy_vegetation_segments is not None or self.output_path_unhealthy_vegetation_segments is not None:
             segments = timeit(self.separate_healthy_and_unhealthy_vegetation_segments)(DF_crop_rows_new)
-
-        timeit(self.length_of_segments)(segments)
+            timeit(self.length_of_segments)(segments)
 
     def save_statistics(self, stat_path, args, tiles):
         """

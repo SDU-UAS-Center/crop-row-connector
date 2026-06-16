@@ -37,14 +37,14 @@ parser.add_argument(
     default=None,
     type=str,
     help='Path to the output file, containing the points of the healthy vegetation in the crop rows'
-     'This is optional, if not provided, the healthy vegetation points will not be saved'
+     'This is optional, if not provided, the healthy vegetation segments will not be saved'
 )
 parser.add_argument(
     "--output_path_unhealthy_vegetation_segments",
     default=None,
     type=str,
     help='Path to the output file, containing the points of the unhealthy vegetation in the crop rows'
-     'This is optional, if not provided, the unhealthy vegetation points will not be saved'
+     'This is optional, if not provided, the unhealthy vegetation segments will not be saved'
 )
 parser.add_argument(
     "--angle_tolerance",
