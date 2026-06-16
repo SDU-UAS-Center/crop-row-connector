@@ -71,6 +71,12 @@ parser.add_argument(
     help="Minimum length tolerance for unhealthy vegetation in the crop rows, to be considered as a segment of unhealthy vegetation. Measured in meters."
 )
 parser.add_argument(
+    "--max_segment_length",
+    default=5,
+    type=float,
+    help="Maximum length of segments to be considered for vegetation classification. Measured in meters."
+)
+parser.add_argument(
     "--max_workers",
     default=os.cpu_count(),
     type=int,
@@ -82,7 +88,8 @@ def _main():
     ccr = Combine_crop_rows.Combine_crop_rows()
     ccr.angle_tolerance = args.angle_tolerance
     ccr.vegetation_threshold = args.vegetation_threshold
-    ccr.unhealthy_vegetation_length = args.unhealthy_vegetation_length
+    ccr.min_unhealthy_vegetation_length = args.min_unhealthy_vegetation_length
+    ccr.max_segment_length = args.max_segment_length
     ccr.ccbt.distance_tolerance = args.distance_tolerance
     ccr.output_path_connected_crop_rows = args.output_path_connected_crop_rows
     ccr.output_path_healthy_vegetation_segments = args.output_path_healthy_vegetation_segments
