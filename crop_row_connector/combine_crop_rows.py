@@ -43,7 +43,8 @@ class Combine_crop_rows:
     def __init__(self) -> None:
         self.angle_tolerance = None
         self.vegetation_threshold = None
-        self.unhealthy_vegetation_length = None
+        self.min_unhealthy_vegetation_length = None
+        self.max_segment_length = None
 
         # Output paths, if None, the respective output will not be saved
         self.output_path_connected_crop_rows = None
@@ -405,69 +406,103 @@ class Combine_crop_rows:
             if n < 2:
                 continue
 
-            start = 0
-            middle = 0
-            end = 0
-
-            in_healthy_segment = False
-            start_found = False
-
             healthy_lines = []
             unhealthy_lines = []
 
-            for i in range(n):
-                veg = vegetation[i]
+            def add_segment(target: list, start_idx: int, end_idx: int) -> None:
+                if self.max_segment_length is None or self.max_segment_length <= 0:
+                    target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
+                    return
 
-                if not start_found and veg >= self.vegetation_threshold:
-                    start = i
-                    start_found = True
-                    in_healthy_segment = True
+                seg_start = start_idx
+                cum_dist = 0.0
+                added = False
 
-                    if i != 0:
-                        unhealthy_lines.append([coords[0].tolist(), coords[i].tolist()])
-                        #print("Unhealthy segment at start of row: ", [coords[0].tolist(), coords[i].tolist()])
-                    continue
+                for j in range(start_idx + 1, end_idx + 1):
+                    p_prev = coords[j - 1]
+                    p_curr = coords[j]
+                    step_dist = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
 
-                if veg >= self.vegetation_threshold:
-                    if not in_healthy_segment:
-                        middle_point = coords[middle]
-                        end_point = coords[end]
+                    if cum_dist + step_dist > self.max_segment_length and seg_start < j - 1:
+                        target.append([coords[seg_start].tolist(), coords[j - 1].tolist()])
+                        seg_start = j - 1
+                        cum_dist = 0.0
+                        added = True
 
-                        dx = middle_point[0] - end_point[0]
-                        dy = middle_point[1] - end_point[1]
-                        distance = math.hypot(dx, dy)
+                    cum_dist += step_dist
 
-                        if distance >= self.unhealthy_vegetation_length:
-                            healthy_lines.append([coords[start].tolist(), middle_point.tolist()])
-                            unhealthy_lines.append([middle_point.tolist(), end_point.tolist()])
-                            start = i
+                    if cum_dist >= self.max_segment_length:
+                        target.append([coords[seg_start].tolist(), coords[j].tolist()])
+                        seg_start = j
+                        cum_dist = 0.0
+                        added = True
 
-                    in_healthy_segment = True
+                if seg_start < end_idx:
+                    target.append([coords[seg_start].tolist(), coords[end_idx].tolist()])
+                    added = True
 
-                else:
-                    if in_healthy_segment:
-                        middle = i - 1
-                    end = i
-                    in_healthy_segment = False
+                if not added:
+                    target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
 
-            # Handle last segment
-            if start_found:
-                start_point = coords[start]
+            # Build runs of contiguous healthy/unhealthy points
+            healthy_mask = vegetation >= self.vegetation_threshold
+            runs: list[tuple[bool, int, int]] = []  # (is_healthy, start, end)
+            run_start = 0
+            run_state = bool(healthy_mask[0])
+            for i in range(1, n):
+                if bool(healthy_mask[i]) != run_state:
+                    runs.append((run_state, run_start, i - 1))
+                    run_start = i
+                    run_state = bool(healthy_mask[i])
+            runs.append((run_state, run_start, n - 1))
 
-                if in_healthy_segment:
-                    healthy_lines.append([start_point.tolist(), coords[-1].tolist()])
-                else:
-                    middle_point = coords[middle]
-                    end_point = coords[end]
-                    if math.isnan(end_point.tolist()[0]) or math.isnan(end_point.tolist()[1]):
-                        end_point = coords[end-1]
+            def run_distance(s: int, e: int) -> float:
+                dx = coords[s][0] - coords[e][0]
+                dy = coords[s][1] - coords[e][1]
+                return math.hypot(dx, dy)
 
-                    healthy_lines.append([start_point.tolist(), middle_point.tolist()])
-                    unhealthy_lines.append([middle_point.tolist(), end_point.tolist()])
-            else: 
-                unhealthy_lines.append([coords[0].tolist(), coords[-1].tolist()])
+            # If no healthy runs exist, everything is unhealthy
+            if not any(is_healthy for is_healthy, _, _ in runs):
+                add_segment(unhealthy_lines, 0, n - 1)
+            else:
+                # Merge short unhealthy runs into neighboring healthy runs
+                merged_runs: list[tuple[bool, int, int]] = []
+                i = 0
+                while i < len(runs):
+                    is_healthy, s, e = runs[i]
+                    if not is_healthy:
+                        dist = run_distance(s, e)
+                        if self.min_unhealthy_vegetation_length is not None and dist < self.min_unhealthy_vegetation_length:
+                            prev_is_healthy = bool(merged_runs and merged_runs[-1][0])
+                            next_index = i + 1
+                            next_is_healthy = next_index < len(runs) and runs[next_index][0]
 
-            # Save segments for later use
+                            if prev_is_healthy and next_is_healthy:
+                                prev_run = merged_runs.pop()
+                                next_run = runs[next_index]
+                                merged_runs.append((True, prev_run[1], next_run[2]))
+                                i += 2
+                                continue
+                            if prev_is_healthy:
+                                prev_run = merged_runs.pop()
+                                merged_runs.append((True, prev_run[1], e))
+                                i += 1
+                                continue
+                            if next_is_healthy:
+                                runs[next_index] = (True, s, runs[next_index][2])
+                                i += 1
+                                continue
+
+                    merged_runs.append((is_healthy, s, e))
+                    i += 1
+
+                # Emit final segments (with max-length splitting applied)
+                for is_healthy, s, e in merged_runs:
+                    if is_healthy:
+                        add_segment(healthy_lines, s, e)
+                    else:
+                        add_segment(unhealthy_lines, s, e)
+
             segments.append({
                 "row_id": int(crop_row_id),
                 "healthy": healthy_lines,
