@@ -89,7 +89,7 @@ def _main():
     ccr.output_path_unhealthy_vegetation_segments = args.output_path_unhealthy_vegetation_segments
     ccr.output_path_vegetation_points = args.output_path_vegetation_points
     ccr.max_workers = args.max_workers
-    ccr.main(args.path_row_information, args.path_points_in_rows)
+    Combine_crop_rows.timeit(ccr.main)(args.path_row_information, args.path_points_in_rows)
 
 if __name__ == "__main__":
     _main()

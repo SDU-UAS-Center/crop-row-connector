@@ -425,7 +425,7 @@ class Combine_crop_rows:
 
                     if i != 0:
                         unhealthy_lines.append([coords[0].tolist(), coords[i].tolist()])
-                        print("Unhealthy segment at start of row: ", [coords[0].tolist(), coords[i].tolist()])
+                        #print("Unhealthy segment at start of row: ", [coords[0].tolist(), coords[i].tolist()])
                     continue
 
                 if veg >= self.vegetation_threshold:
