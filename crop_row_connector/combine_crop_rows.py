@@ -415,26 +415,17 @@ class Combine_crop_rows:
                     return
 
                 seg_start = start_idx
-                cum_dist = 0.0
                 added = False
 
                 for j in range(start_idx + 1, end_idx + 1):
-                    p_prev = coords[j - 1]
+                    p_seg_start = coords[seg_start]
                     p_curr = coords[j]
-                    step_dist = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
+                    dist_from_start = math.hypot(p_curr[0] - p_seg_start[0], p_curr[1] - p_seg_start[1])
 
-                    if cum_dist + step_dist > self.max_segment_length and seg_start < j - 1:
+                    if dist_from_start > self.max_segment_length:
+                        # Current point exceeds max_segment_length, end segment at previous point
                         target.append([coords[seg_start].tolist(), coords[j - 1].tolist()])
                         seg_start = j - 1
-                        cum_dist = 0.0
-                        added = True
-
-                    cum_dist += step_dist
-
-                    if cum_dist >= self.max_segment_length:
-                        target.append([coords[seg_start].tolist(), coords[j].tolist()])
-                        seg_start = j
-                        cum_dist = 0.0
                         added = True
 
                 if seg_start < end_idx:
