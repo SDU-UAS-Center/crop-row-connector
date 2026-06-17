@@ -1,5 +1,7 @@
-Tutorial with test data
-===============================
+.. _tutorial-test-data:
+
+Tutorial with Test Data
+=======================
 
 In this tutorial, we will guide you through the steps to run *crop-row-connector* using the provided test data.
 
