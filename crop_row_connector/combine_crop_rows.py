@@ -542,24 +542,26 @@ class Combine_crop_rows:
         for row in segments:
 
             # Healthy segments
-            for seg in row["healthy"]:
-                #print("Healthy segment: ", seg)
-                dx = seg[0][0] - seg[1][0]
-                dy = seg[0][1] - seg[1][1]
-                length = math.hypot(dx, dy)
+            if len(row["healthy"]) > 0:
+                for seg in row["healthy"]:
+                    if not (math.isnan(seg[0][0]) or math.isnan(seg[0][1]) or math.isnan(seg[1][0]) or math.isnan(seg[1][1])):
+                        dx = seg[0][0] - seg[1][0]
+                        dy = seg[0][1] - seg[1][1]
+                        length = math.hypot(dx, dy)
 
-                healthy_length += length
-                total_length += length
+                        healthy_length += length
+                        total_length += length
 
             # Unhealthy segments
-            for seg in row["unhealthy"]:
-                #print("Unhealthy segment: ", seg)
-                dx = seg[0][0] - seg[1][0]
-                dy = seg[0][1] - seg[1][1]
-                length = math.hypot(dx, dy)
-
-                unhealthy_length += length
-                total_length += length
+            if len(row["unhealthy"]) > 0:
+                for seg in row["unhealthy"]:
+                    if not (math.isnan(seg[0][0]) or math.isnan(seg[0][1]) or math.isnan(seg[1][0]) or math.isnan(seg[1][1])):
+                        dx = seg[0][0] - seg[1][0]
+                        dy = seg[0][1] - seg[1][1]
+                        length = math.hypot(dx, dy)
+                        
+                        unhealthy_length += length
+                        total_length += length                    
 
         if math.isnan(unhealthy_length):
             print("!!!!!! length is nan")
