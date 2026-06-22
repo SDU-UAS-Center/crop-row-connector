@@ -29,6 +29,6 @@ Next Steps
 
 After completing the tutorials:
 
-- Move to `How-to Guides <2_how_to/index.rst>`_ for recipes solving specific problems
-- Read `Algorithm Overview <4_explanation/algorithm_overview.rst>`_ to understand how it works
-- Reference `API Reference <3_reference/api_reference.rst>`_ for API details
+- Move to `How-to Guides <../2_how_to/index.rst>`_ for recipes solving specific problems
+- Read `Algorithm Overview <../4_explanation/algorithm_overview.rst>`_ to understand how it works
+- Reference `API Reference <../3_reference/api_reference.rst>`_ for API details
