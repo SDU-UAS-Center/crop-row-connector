@@ -20,45 +20,10 @@ as separate fragments. This tool reconnects these fragments creating complete cr
 Quick Start
 ===========
 
-**1. Clone the Repository:**
+To install and run crop-row-connector quickly, follow the steps provided in the `Tutorial with Test Data <1_tutorials/running_the_test_dataset.rst>`_ guide. 
+This will help you see how the tool works with real data and understand the output it generates.
 
-If you haven't already, clone the *crop-row-connector* repository from GitHub to your local machine.
 
-.. code-block:: shell
-
-    git clone https://github.com/Stormlord2001/crop-row-connector.git
-    cd crop-row-connector
-
-**2. Create a Virtual Environment:**
-
-It is recommended to create a virtual environment to manage dependencies.
-
-.. code-block:: shell
-
-    python3 -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-
-**3. Install Dependencies:**
-
-Install the required dependencies into the virtual environment using pip.
-
-.. code-block:: shell
-
-    pip install .
-
-**4. Run the Connector:**
-
-Use the following command to run the *crop-row-connector* with the test data.
-
-.. code-block:: shell
-
-    crop-row-connector docs/test_dataset/input/row_information_global.csv docs/test_dataset/input/points_in_rows.csv --output_path_connected_crop_rows docs/test_dataset/output/connected_crop_rows.csv --output_path_vegetation_points docs/test_dataset/output/line_points.csv --distance_tolerance 0.12 --angle_tolerance 0.12 --output_path_unhealthy_vegetation_segments docs/test_dataset/output/unhealthy --output_path_healthy_vegetation_segments docs/test_dataset/output/healthy
-
-**5. View the Results:**
-
-After running the command, you will find the output files in the specified paths. You can visualize the connected crop rows and line points using georeferencer tools like QGIS.
-
-For more detailed setup instructions, see `Installation <installation.rst>`_.
 
 Documentation Overview
 ======================
@@ -91,14 +56,9 @@ Installation
 ============
 
 *crop-row-connector* is a combined Rust and Python package. Install it easily with pip:
+The documentation installation instructions to follow. See `Installation <installation.rst>`_ for more information.
+It is recommended to follow this guide to ensure that rustc is set up correctly for the Rust components.
 
-.. code-block:: shell
-
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install crop-row-connector
-
-For system-wide installation or development setup, see `Installation <installation.rst>`_.
 
 For Engineers Building Farmer Interfaces
 =========================================
