@@ -20,19 +20,19 @@ Common Tasks
 ============
 
 **I have field data and want to process it**
-   Start with :doc:`preparing_your_data` to ensure your data is in the right format.
+   Start with `Preparing Your Data <preparing_your_data.rst>`_ to ensure your data is in the right format.
 
 **My results don't look right**
-   See :doc:`choose_connection_parameters` to understand what's happening and how to adjust settings.
+   See `Choose Connection Parameters <choose_connection_parameters.rst>`_ to understand what's happening and how to adjust settings.
 
 **I want to integrate this into an application**
-   Read :doc:`using_as_library` for patterns and examples for different use cases.
+   Read `Using as a Library <using_as_library.rst>`_ for patterns and examples for different use cases.
 
 **I want to understand how the algorithm works**
-   Instead, go to :doc:`../explanation/algorithm_overview` for conceptual explanation.
+   Instead, go to `Algorithm Overview <../4_explanation/algorithm_overview.rst>`_ for conceptual explanation.
 
 **I need technical API details**
-   See :doc:`../reference/api_reference` for complete API documentation.
+   See `API Reference <../3_reference/api_reference.rst>`_ for complete API documentation.
 
 How-to vs. Tutorial
 ===================
@@ -41,4 +41,4 @@ How-to vs. Tutorial
 
 **How-to Guides** assume you understand the basics and help you accomplish specific goals.
 
-If you're new to crop-row-connector, start with the :ref:`tutorials` instead.
+If you're new to crop-row-connector, start with `Tutorials <../1_tutorials/index.rst>`_ instead.

@@ -55,7 +55,7 @@ Reference vs. Explanation
 If You Don't Find Something
 ============================
 
-- **Looking for how to do something?** → Try :ref:`how_to`
-- **Looking for conceptual understanding?** → Try :ref:`explanation`
-- **Looking for setup instructions?** → Try :ref:`installation`
-- **Learning by example?** → Try :ref:`tutorials`
+- **Looking for how to do something?** → Try `How-to Guides <../2_how_to/index.rst>`_
+- **Looking for conceptual understanding?** → Try `Explanation <../4_explanation/index.rst>`_
+- **Looking for setup instructions?** → Try `Installation <../installation.rst>`_
+- **Learning by example?** → Try `Tutorials <../1_tutorials/index.rst>`_
