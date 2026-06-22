@@ -44,7 +44,7 @@ Quick Start
     
     ccr.main("row_information.csv", "vegetation_points.csv")
 
-See :ref:`installing <installation>` for detailed setup instructions.
+See :doc:`installation` for detailed setup instructions.
 
 Documentation Overview
 ======================
@@ -54,7 +54,7 @@ This documentation is organized into four sections to help you learn and use cro
 **Tutorials** — *Learn by doing*
     Step-by-step guides that walk through practical examples. Start here if you're new to the tool.
 
-    - :doc:`../1_tutorials/running_the_test_dataset.rst` — Run the included test data to see how it works
+    - :doc:`1_tutorials/running_the_test_dataset` — Run the included test data to see how it works
 
 **How-To Guides** — *Solve specific problems*
     Practical recipes for common tasks when building interfaces or analyzing your own data.
@@ -84,7 +84,7 @@ Installation
     source venv/bin/activate  # On Windows: venv\Scripts\activate
     pip install crop-row-connector
 
-For system-wide installation or development setup, see :ref:`installation <installation>`.
+For system-wide installation or development setup, see :doc:`installation`.
 
 For Engineers Building Farmer Interfaces
 =========================================
@@ -108,11 +108,11 @@ For Agricultural Researchers
 
 If you're analyzing field data or conducting research:
 
-**Start with**: :doc:`tutorials/running_the_test_dataset` and :doc:`explanation/algorithm_overview`
+**Start with**: :doc:`1_tutorials/running_the_test_dataset` and :doc:`4_explanation/algorithm_overview`
 
-**Then use**: :doc:`how_to/choose_connection_parameters` to optimize for your specific equipment
+**Then use**: :doc:`2_how_to/choose_connection_parameters` to optimize for your specific equipment
 
-**Reference**: :doc:`reference/api_reference` for detailed technical specifications
+**Reference**: :doc:`3_reference/api_reference` for detailed technical specifications
 
 Table of Contents
 =================
@@ -121,12 +121,12 @@ Table of Contents
    :hidden:
 
    Installation <installation>
-   tutorials/running_the_test_dataset
-   how_to/preparing_your_data
-   how_to/choose_connection_parameters
-   how_to/using_as_library
-   explanation/algorithm_overview
-   reference/api_reference
+   1_tutorials/running_the_test_dataset
+   2_how_to/preparing_your_data
+   2_how_to/choose_connection_parameters
+   2_how_to/using_as_library
+   4_explanation/algorithm_overview
+   3_reference/api_reference
 
 Key Concepts
 ============
