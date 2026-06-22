@@ -1,12 +1,11 @@
 Crop Row Connector
 ==================
 
-**Connect fragmented crop rows into continuous lines for agricultural field analysis.**
+**Connect fragmented crop rows into continuous lines.**
 
 *crop-row-connector* is a Python/Rust package that solves a critical problem in precision agriculture: 
 when large orthomosaic images are processed tile-by-tile, crop rows that span multiple tiles get detected 
-as separate fragments. This tool reconnects these fragments using a sophisticated matching algorithm, 
-creating complete crop row geometries for field analysis.
+as separate fragments. This tool reconnects these fragments creating complete crop row geometries for field analysis.
 
 .. image:: figures/Field_detected.png
    :alt: Detected crop rows in an orthomosaic field
@@ -55,24 +54,24 @@ This documentation is organized into four sections to help you learn and use cro
 **Tutorials** — *Learn by doing*
     Step-by-step guides that walk through practical examples. Start here if you're new to the tool.
 
-    - :doc:`tutorials/running_the_test_dataset` — Run the included test data to see how it works
+    - :doc:`1_tutorials/running_the_test_dataset` — Run the included test data to see how it works
 
 **How-To Guides** — *Solve specific problems*
     Practical recipes for common tasks when building interfaces or analyzing your own data.
 
-    - :doc:`how_to/preparing_your_data` — Prepare and validate your field data
-    - :doc:`how_to/choose_connection_parameters` — Find the right tolerance values for your equipment
-    - :doc:`how_to/using_as_library` — Integrate crop-row-connector into your applications
+    - :doc:`2_how_to/preparing_your_data` — Prepare and validate your field data
+    - :doc:`2_how_to/choose_connection_parameters` — Find the right tolerance values for your equipment
+    - :doc:`2_how_to/using_as_library` — Integrate crop-row-connector into your applications
 
 **Explanation** — *Understand the concepts*
     Conceptual guides that explain how and why crop row connection works.
 
-    - :doc:`explanation/algorithm_overview` — How the connection algorithm works under the hood
+    - :doc:`4_explanation/algorithm_overview` — How the connection algorithm works under the hood
 
 **Reference** — *Look up details*
     Technical API documentation for developers integrating the tool into applications.
 
-    - :doc:`reference/api_reference` — Complete API documentation for all classes and methods
+    - :doc:`3_reference/api_reference` — Complete API documentation for all classes and methods
 
 Installation
 ============

@@ -6,8 +6,8 @@ Tutorial with Test Data
 In this tutorial, we will guide you through the steps to run *crop-row-connector* using the provided test data.
 
 The dataset includes two main files found in the `docs/test_dataset/input/` directory:
-- A csv file containing the GPS coordinates of the crop rows.
-- A csv file containing the GPS coordinates of all points in the orthomosaic.
+- A csv file containing the GPS coordinates of the crop rows. (`row_information_global.csv`)
+- A csv file containing the GPS coordinates of all points in the orthomosaic. (`points_in_rows.csv`)
 
 
 A visual representation of all the points in the orthomosaic can be seen below:
