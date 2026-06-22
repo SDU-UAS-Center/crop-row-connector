@@ -91,7 +91,7 @@ For Engineers Building Farmer Interfaces
 
 If you're building a user interface or operation management system for farmers, the tool integrates as a library:
 
-**Start with**: :doc:`how_to/using_as_library`
+**Start with**: :doc:`2_how_to/using_as_library`
 
 The guide includes patterns for:
 - Web service endpoints
@@ -99,7 +99,7 @@ The guide includes patterns for:
 - Batch field processing
 - Parameter optimization workflows
 
-**Then explore**: :doc:`explanation/algorithm_overview` to understand what parameters mean
+**Then explore**: :doc:`4_explanation/algorithm_overview` to understand what parameters mean
 
 This helps you build interfaces that let farmers understand and control the connection process.
 
