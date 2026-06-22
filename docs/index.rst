@@ -54,7 +54,7 @@ This documentation is organized into four sections to help you learn and use cro
 **Tutorials** — *Learn by doing*
     Step-by-step guides that walk through practical examples. Start here if you're new to the tool.
 
-    - :doc:`1_tutorials/running_the_test_dataset` — Run the included test data to see how it works
+    - :doc:`./1_tutorials/running_the_test_dataset` — Run the included test data to see how it works
 
 **How-To Guides** — *Solve specific problems*
     Practical recipes for common tasks when building interfaces or analyzing your own data.
