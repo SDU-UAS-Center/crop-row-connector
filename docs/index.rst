@@ -20,31 +20,45 @@ as separate fragments. This tool reconnects these fragments creating complete cr
 Quick Start
 ===========
 
-**1. Install the package:**
+**1. Clone the Repository:**
+
+If you haven't already, clone the *crop-row-connector* repository from GitHub to your local machine.
 
 .. code-block:: shell
 
-    pip install crop-row-connector
+    git clone https://github.com/Stormlord2001/crop-row-connector.git
+    cd crop-row-connector
 
-**2. Prepare your data:**
+**2. Create a Virtual Environment:**
 
-- Row information CSV (from Crop Row Detector)
-- Vegetation points CSV (from Crop Row Detector)
+It is recommended to create a virtual environment to manage dependencies.
 
-**3. Process:**
+.. code-block:: shell
 
-.. code-block:: python
+    python3 -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
-    from crop_row_connector import combine_crop_rows
-    
-    ccr = combine_crop_rows.Combine_crop_rows()
-    ccr.angle_tolerance = 0.1
-    ccr.distance_tolerance = 0.12
-    ccr.output_path_connected_crop_rows = "output.csv"
-    
-    ccr.main("row_information.csv", "vegetation_points.csv")
+**3. Install Dependencies:**
 
-See `Installation <installation.rst>`_ for detailed setup instructions.
+Install the required dependencies into the virtual environment using pip.
+
+.. code-block:: shell
+
+    pip install .
+
+**4. Run the Connector:**
+
+Use the following command to run the *crop-row-connector* with the test data.
+
+.. code-block:: shell
+
+    crop-row-connector docs/test_dataset/input/row_information_global.csv docs/test_dataset/input/points_in_rows.csv --output_path_connected_crop_rows docs/test_dataset/output/connected_crop_rows.csv --output_path_vegetation_points docs/test_dataset/output/line_points.csv --distance_tolerance 0.12 --angle_tolerance 0.12 --output_path_unhealthy_vegetation_segments docs/test_dataset/output/unhealthy --output_path_healthy_vegetation_segments docs/test_dataset/output/healthy
+
+**5. View the Results:**
+
+After running the command, you will find the output files in the specified paths. You can visualize the connected crop rows and line points using georeferencer tools like QGIS.
+
+For more detailed setup instructions, see `Installation <installation.rst>`_.
 
 Documentation Overview
 ======================
