@@ -44,7 +44,7 @@ Quick Start
     
     ccr.main("row_information.csv", "vegetation_points.csv")
 
-See :doc:`installation` for detailed setup instructions.
+See `Installation <installation.rst>`_ for detailed setup instructions.
 
 Documentation Overview
 ======================
@@ -54,24 +54,24 @@ This documentation is organized into four sections to help you learn and use cro
 **Tutorials** — *Learn by doing*
     Step-by-step guides that walk through practical examples. Start here if you're new to the tool.
 
-    - :doc:`1_tutorials/running_the_test_dataset` — Run the included test data to see how it works
+    - `Run the included test data to see how it works <1_tutorials/running_the_test_dataset.rst>`_
 
 **How-To Guides** — *Solve specific problems*
     Practical recipes for common tasks when building interfaces or analyzing your own data.
 
-    - :doc:`2_how_to/preparing_your_data` — Prepare and validate your field data
-    - :doc:`2_how_to/choose_connection_parameters` — Find the right tolerance values for your equipment
-    - :doc:`2_how_to/using_as_library` — Integrate crop-row-connector into your applications
+    - `Prepare and validate your field data <2_how_to/preparing_your_data.rst>`_
+    - `Find the right tolerance values for your equipment <2_how_to/choose_connection_parameters.rst>`_
+    - `Integrate crop-row-connector into your applications <2_how_to/using_as_library.rst>`_
 
 **Explanation** — *Understand the concepts*
     Conceptual guides that explain how and why crop row connection works.
 
-    - :doc:`4_explanation/algorithm_overview` — How the connection algorithm works under the hood
+    - `How the connection algorithm works under the hood <4_explanation/algorithm_overview.rst>`_
 
 **Reference** — *Look up details*
     Technical API documentation for developers integrating the tool into applications.
 
-    - :doc:`3_reference/api_reference` — Complete API documentation for all classes and methods
+    - `Complete API documentation for all classes and methods <3_reference/api_reference.rst>`_
 
 Installation
 ============
@@ -84,14 +84,14 @@ Installation
     source venv/bin/activate  # On Windows: venv\Scripts\activate
     pip install crop-row-connector
 
-For system-wide installation or development setup, see :doc:`installation`.
+For system-wide installation or development setup, see `Installation <installation.rst>`_.
 
 For Engineers Building Farmer Interfaces
 =========================================
 
 If you're building a user interface or operation management system for farmers, the tool integrates as a library:
 
-**Start with**: :doc:`2_how_to/using_as_library`
+**Start with**: `Using as a Library <2_how_to/using_as_library.rst>`_
 
 The guide includes patterns for:
 - Web service endpoints
@@ -99,7 +99,7 @@ The guide includes patterns for:
 - Batch field processing
 - Parameter optimization workflows
 
-**Then explore**: :doc:`4_explanation/algorithm_overview` to understand what parameters mean
+**Then explore**: `Algorithm Overview <4_explanation/algorithm_overview.rst>`_ to understand what parameters mean
 
 This helps you build interfaces that let farmers understand and control the connection process.
 
@@ -108,11 +108,11 @@ For Agricultural Researchers
 
 If you're analyzing field data or conducting research:
 
-**Start with**: :doc:`1_tutorials/running_the_test_dataset` and :doc:`4_explanation/algorithm_overview`
+**Start with**: `Run the Test Dataset <1_tutorials/running_the_test_dataset.rst>`_ and `Algorithm Overview <4_explanation/algorithm_overview.rst>`_
 
-**Then use**: :doc:`2_how_to/choose_connection_parameters` to optimize for your specific equipment
+**Then use**: `Choose Connection Parameters <2_how_to/choose_connection_parameters.rst>`_ to optimize for your specific equipment
 
-**Reference**: :doc:`3_reference/api_reference` for detailed technical specifications
+**Reference**: `API Reference <3_reference/api_reference.rst>`_ for detailed technical specifications
 
 Table of Contents
 =================
