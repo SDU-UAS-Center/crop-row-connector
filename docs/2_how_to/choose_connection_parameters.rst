@@ -64,7 +64,7 @@ Factors Affecting Distance Tolerance
 
 **Row Spacing**
     Minimum distance between rows limits tolerance
-    
+
     - Narrow spacing (0.5 m): tolerance ≤ 0.2 m
     - Standard spacing (0.75 m): tolerance ≤ 0.3 m
     - Wide spacing (1.5 m): tolerance ≤ 0.5 m

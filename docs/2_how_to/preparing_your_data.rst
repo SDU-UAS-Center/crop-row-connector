@@ -16,7 +16,7 @@ Your data comes from:
 
    - Processes orthomosaic imagery
    - Outputs row geometry data
-   
+
 2. **Orthomosaic Image** (optional for visualization)
 
    - GeoTIFF format (.tif)

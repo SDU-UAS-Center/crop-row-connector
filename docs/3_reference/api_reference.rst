@@ -18,7 +18,7 @@ Configuration Attributes
 .. py:attribute:: angle_tolerance
 
     (float) Maximum angle difference in radians for rows to be considered for connection.
-    
+
     **Type**: float
     **Default**: None (must be set before use)
     **Typical range**: 0.05 - 0.2 radians
@@ -27,7 +27,7 @@ Configuration Attributes
 .. py:attribute:: distance_tolerance
 
     (float) Maximum distance in meters between row endpoints for connection.
-    
+
     **Type**: float
     **Default**: None (must be set before use)
     **Typical range**: 0.05 - 0.5 meters
@@ -36,7 +36,7 @@ Configuration Attributes
 .. py:attribute:: vegetation_threshold
 
     (float) Grayscale threshold (0-255) for classifying vegetation as healthy.
-    
+
     **Type**: float
     **Default**: None (must be set before use)
     **Typical range**: 100 - 150
@@ -45,7 +45,7 @@ Configuration Attributes
 .. py:attribute:: min_unhealthy_vegetation_length
 
     (float) Minimum spatial extent in meters for unhealthy vegetation segments to be recorded.
-    
+
     **Type**: float
     **Default**: None (must be set before use)
     **Typical range**: 0.05 - 0.5 meters
@@ -54,7 +54,7 @@ Configuration Attributes
 .. py:attribute:: max_segment_length
 
     (float) Maximum length in meters for vegetation classification segments.
-    
+
     **Type**: float
     **Default**: None (must be set before use)
     **Typical range**: 1 - 10 meters
@@ -63,7 +63,7 @@ Configuration Attributes
 .. py:attribute:: max_workers
 
     (int) Maximum number of parallel workers for processing.
-    
+
     **Type**: int
     **Default**: os.cpu_count() (number of CPU cores)
     **Note**: Affects parallelization for large datasets
@@ -76,7 +76,7 @@ All output paths are optional. If None, that output won't be generated.
 .. py:attribute:: output_path_connected_crop_rows
 
     (str or None) Path to save connected crop rows to CSV.
-    
+
     **Output format**: CSV with columns:
     - row_index: Unique identifier for connected row
     - tile: Tile number
@@ -90,19 +90,19 @@ All output paths are optional. If None, that output won't be generated.
 .. py:attribute:: output_path_vegetation_points
 
     (str or None) Path to save all vegetation points associated with connected rows.
-    
+
     **Output format**: CSV with coordinates and vegetation values
 
 .. py:attribute:: output_path_healthy_vegetation_segments
 
     (str or None) Path to save segments with healthy vegetation.
-    
+
     **Output format**: CSV with spatial location and health metrics
 
 .. py:attribute:: output_path_unhealthy_vegetation_segments
 
     (str or None) Path to save segments with unhealthy vegetation.
-    
+
     **Output format**: CSV with spatial location and damage metrics
 
 Core Methods
@@ -111,35 +111,35 @@ Core Methods
 .. py:method:: __init__()
 
     Initialize a new Combine_crop_rows instance with default settings.
-    
+
     **Returns**: Combine_crop_rows object
-    
+
     **Example**:
-    
+
     .. code-block:: python
-    
+
         ccr = Combine_crop_rows()
 
 .. py:method:: main(path_row_information: str, path_points_in_rows: str) -> None
 
     Execute the complete crop row connection pipeline.
-    
+
     **Parameters**:
-    
+
     - ``path_row_information`` (str): Path to CSV with row information
       Format: [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
-    
+
     - ``path_points_in_rows`` (str): Path to CSV with vegetation points
       Format: [tile_number, row_number, x, y, vegetation]
-    
+
     **Raises**: FileNotFoundError if input files don't exist
-    
+
     **Side effects**: Creates output files at configured paths
-    
+
     **Example**:
-    
+
     .. code-block:: python
-    
+
         ccr = Combine_crop_rows()
         ccr.angle_tolerance = 0.1
         ccr.distance_tolerance = 0.12
@@ -150,27 +150,27 @@ Core Methods
 .. py:method:: load_csv(path: str) -> NDArray[np.float64]
 
     Load a CSV file into a NumPy array for processing.
-    
+
     **Parameters**:
-    
+
     - ``path`` (str): Path to CSV file
-    
+
     **Returns**: NumPy array of float64 values
-    
+
     **Raises**: FileNotFoundError, ValueError if CSV is malformed
-    
+
     **Note**: Automatically converts CSV to numpy format for performance
 
 .. py:method:: ensure_parent_directory_exist(path: Path) -> None
 
     Ensure that the directory structure for an output file exists.
-    
+
     **Parameters**:
-    
+
     - ``path`` (Path): Output file path
-    
+
     **Side effects**: Creates directories if they don't exist
-    
+
     **Note**: Called automatically for all output files
 
 find_connection_of_rows_between_two_tiles
@@ -186,7 +186,7 @@ Configuration Attributes
 .. py:attribute:: distance_tolerance
 
     (float) Distance threshold for filtering matched rows.
-    
+
     **Type**: float
     **Units**: Meters
 
@@ -209,25 +209,25 @@ Core Methods
 .. py:method:: calculate_connections_between_2_tiles(tile_1: tile, tile_2: tile) -> NDArray
 
     Find all valid row-to-row connections between two adjacent tiles.
-    
+
     **Parameters**:
-    
+
     - ``tile_1`` (tile): First tile object
     - ``tile_2`` (tile): Second tile object
-    
+
     **Returns**: Connection matrix with shape (n_connections, 2)
     Columns: [row_index_in_tile_1, row_index_in_tile_2]
-    
-    **Algorithm**: 
+
+    **Algorithm**:
     1. Build cost matrix from distances
     2. Apply Hungarian algorithm
     3. Filter with distance tolerance
     4. Remove padding from square matrix
-    
+
     **Example**:
-    
+
     .. code-block:: python
-    
+
         finder = find_connection_of_rows_between_two_tiles()
         finder.distance_tolerance = 0.12
         connections = finder.calculate_connections_between_2_tiles(tile_a, tile_b)
@@ -246,18 +246,18 @@ Core Methods
 .. py:method:: connect_crop_rows_of_2_tiles(tile_1_number: int, tile_2_number: int, connections: NDArray) -> None
 
     Apply connections between two tiles to the global crop row graph.
-    
+
     **Parameters**:
-    
+
     - ``tile_1_number`` (int): ID of first tile
     - ``tile_2_number`` (int): ID of second tile
     - ``connections`` (NDArray): Connection matrix from Hungarian algorithm
-    
+
     **Behavior**:
     - If both rows are new: create new connected row entry
     - If one row exists: extend existing connected row
     - If both exist: merge two connected row groups
-    
+
     **Side effects**: Updates internal connected_crop_rows array
 
 State Attributes
@@ -266,9 +266,9 @@ State Attributes
 .. py:attribute:: connected_crop_rows
 
     (NDArray) Master array of all connected crop rows.
-    
+
     **Shape**: (n_connected_rows, 12)
-    **Columns**: 
+    **Columns**:
     - Index 0: row_index (unique connected row ID)
     - Index 1-2: tile and row number
     - Index 3-4: connected tile and row
@@ -293,7 +293,7 @@ Represents a single tile of processed orthomosaic data.
 - ``position`` (list[float]): [x, y] grid position of tile
 - ``angle`` (float): Predominant crop row direction in radians
 - ``rows`` (NDArray): Detected rows with shape (n_rows, 9)
-  
+
   Columns in rows array:
   - Index 0: row number
   - Index 1-2: start point (x, y)

@@ -8,7 +8,7 @@ How-to Guides
 
 **Solve specific problems** — These practical guides provide recipes for common tasks when using crop-row-connector.
 
-Each how-to guide addresses a specific problem or workflow. Use these when you know what you want to accomplish 
+Each how-to guide addresses a specific problem or workflow. Use these when you know what you want to accomplish
 but need guidance on how to do it.
 
 Common Tasks
