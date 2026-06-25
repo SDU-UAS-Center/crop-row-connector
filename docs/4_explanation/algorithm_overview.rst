@@ -110,7 +110,7 @@ Connection Parameters
 
 **distance_tolerance** (meters)
     Maximum allowed distance between row endpoints for them to be considered connected.
-    
+
     - Default: 0.1 m
     - Typical range: 0.05-0.5 m
     - Higher values → more connections (risk of false matches)
@@ -118,7 +118,7 @@ Connection Parameters
 
 **angle_tolerance** (radians)
     Maximum allowed angle difference between rows for connection.
-    
+
     - Default: 0.1 rad (~5.7 degrees)
     - Typical range: 0.05-0.2 rad
     - Higher values → more flexible angle matching
@@ -129,21 +129,21 @@ Vegetation Parameters
 
 **vegetation_threshold** (grayscale 0-255)
     Pixel value threshold for classifying vegetation as "healthy".
-    
+
     - Default: 127 (mid-range)
     - Higher values → higher vegetation density needed to be "healthy"
     - Lower values → more pixels classified as healthy
 
 **min_unhealthy_vegetation_length** (meters)
     Minimum spatial extent for unhealthy vegetation to be recorded as a segment.
-    
+
     - Default: 0.1 m
     - Prevents noise from being recorded as disease
     - Filter for biologically meaningful segments
 
 **max_segment_length** (meters)
     Maximum length for vegetation classification segments.
-    
+
     - Default: 5 m
     - Affects spatial resolution of vegetation analysis
     - Larger values → coarser vegetation classification

@@ -52,30 +52,30 @@ Factors Affecting Distance Tolerance
 
 **Equipment Accuracy**
     More accurate orthomosaic = smaller tolerance needed
-    
+
     - Drone with RTK GPS: 0.05 - 0.1 m
     - Standard drone: 0.1 - 0.2 m
     - Vintage imagery: 0.3 - 0.5 m
 
 **Tile Processing Accuracy**
     Crop Row Detector consistency affects endpoint placement
-    
+
     - High-quality detector: ±5 cm accuracy → use 0.1 m tolerance
     - Standard detector: ±10 cm accuracy → use 0.15 m tolerance
     - Experimental detector: ±20 cm accuracy → use 0.3 m tolerance
 
 **Row Spacing**
     Minimum distance between rows limits tolerance
-    
+
     - Narrow spacing (0.5 m): tolerance ≤ 0.2 m
     - Standard spacing (0.75 m): tolerance ≤ 0.3 m
     - Wide spacing (1.5 m): tolerance ≤ 0.5 m
-    
+
     **Rule of thumb**: tolerance < (row_spacing / 3)
 
 **Tile Boundary Effects**
     How rows cross tile boundaries affects measurement
-    
+
     - Tile boundaries perpendicular to rows: large offsets possible → larger tolerance
     - Tile boundaries parallel to rows: small offsets → smaller tolerance
 
