@@ -9,9 +9,13 @@ description = "Python scripts for crop-row-connector"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Crop Row Connector maintainers", email = "devnull@example.com" }
+  { name="Rasmus Storm", email="hde@mmmi.sdu.dk" },
 ]
-license = { text = "BSD-3-Clause" }
+maintainers = [
+  { name="Henrik Skov Midtiby", email="hemi@mmmi.sdu.dk" },
+  { name="Henrik Dyrberg Egemose", email="hde@mmmi.sdu.dk" },
+]
+license-files = ["LICEN[CS]E*"]
 dependencies = [
     "numpy",
     "opencv-python",
@@ -26,8 +30,6 @@ module-name = "crop_row_connector._native"
 
 [tool.maturin.generate-ci.github]
 trusted-publishing = true
-
-
 
 [project.scripts]
 crop-row-connector = "crop_row_connector.__main__:_main"
