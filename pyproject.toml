@@ -117,14 +117,17 @@ dev = [
 ]
 
 [tool.git-cliff.changelog]
-# see [changelog] section for more keys
+header = "What's Changed"
 
 [tool.git-cliff.git]
 conventional_commits = true
 filter_unconventional = true
 commit_parsers = [
-    { message = "^feat*", group = "<!-- 0 -->:rocket: New features" },
-    { message = "^fix*", group = "<!-- 1 -->:bug: Bug fixes" },
-    { message = "^perf*", group = "<!-- 2 -->:zap: Performance" },
-    { message = "^chore*", group = "<!-- 3 -->:gear: Miscellaneous" },
+    { message = "^feat*", group = "<!-- 0 -->New features" },
+    { message = "^fix*", group = "<!-- 1 -->Bug fixes" },
+    { message = "^refactor*", group = "<!-- 2 -->Code Quality & Refactoring" },
+    { message = "^docs*", group = "<!-- 3 -->Documentation" },
+    { message = "^test*", group = "<!-- 4 -->New tests" },
+    { message = "^perf*", group = "<!-- 5 -->Performance" },
+    { message = "^chore*", group = "<!-- 6 -->Miscellaneous" },
 ]
