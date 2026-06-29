@@ -216,19 +216,19 @@ Validation Checklist
 After choosing parameters, validate with these checks:
 
 **Connectivity**
-- [ ] Rows that visually appear continuous are connected
-- [ ] Rows that visually are parallel but separate are not merged
-- [ ] No "orphan" rows (single-segment rows that should connect)
+   - [ ] Rows that visually appear continuous are connected
+   - [ ] Rows that visually are parallel but separate are not merged
+   - [ ] No "orphan" rows (single-segment rows that should connect)
 
 **Correctness**
-- [ ] Row count matches expected count
-- [ ] Connection pattern makes sense (no impossible connections)
-- [ ] Vegetation data properly associated with connected rows
+   - [ ] Row count matches expected count
+   - [ ] Connection pattern makes sense (no impossible connections)
+   - [ ] Vegetation data properly associated with connected rows
 
 **Stability**
-- [ ] Results consistent across different field areas
-- [ ] Results consistent if run multiple times
-- [ ] Small parameter changes don't cause drastic result changes
+   - [ ] Results consistent across different field areas
+   - [ ] Results consistent if run multiple times
+   - [ ] Small parameter changes don't cause drastic result changes
 
 Common Issues and Solutions
 ============================
