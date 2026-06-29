@@ -124,25 +124,22 @@ Vegetation Parameters
 
 **vegetation_threshold** (grayscale 0-255)
     Pixel value threshold for classifying vegetation as "healthy".
-    
-    - Default: 127 (mid-range)
-    - Higher values → higher vegetation density needed to be "healthy"
-    - Lower values → more pixels classified as healthy
+       - Default: 127 (mid-range)
+       - Higher values → higher vegetation density needed to be "healthy"
+       - Lower values → more pixels classified as healthy
 
 **min_unhealthy_vegetation_length** (meters)
-    Minimum spatial extent for unhealthy vegetation to be recorded as a segment.
-    
-    - Default: 0.1 m
-    - Prevents noise from being recorded as disease
-    - Filter for biologically meaningful segments
+    Minimum spatial extent for unhealthy vegetation to be recorded as a segment. 
+       - Default: 0.1 m
+       - Prevents noise from being recorded as disease
+       - Filter for biologically meaningful segments
 
 **max_segment_length** (meters)
     Maximum length for vegetation classification segments.
-    
-    - Default: 5 m
-    - Affects spatial resolution of vegetation analysis
-    - Larger values → coarser vegetation classification
-    - Smaller values → finer vegetation classification
+       - Default: 5 m
+       - Affects spatial resolution of vegetation analysis
+       - Larger values → coarser vegetation classification
+       - Smaller values → finer vegetation classification
 
 Algorithm Complexity
 ====================
@@ -151,22 +148,21 @@ Performance Considerations
 ---------------------------
 
 The connection process has complexity roughly proportional to:
-
-- Number of tiles: :math:`N_{tiles}`
-- Rows per tile: :math:`R_{avg}`
-- Connections per pair: Hungarian Algorithm is :math:`O(R^3)`
+   - Number of tiles: :math:`N_{tiles}`
+   - Rows per tile: :math:`R_{avg}`
+   - Connections per pair: Hungarian Algorithm is :math:`O(R^3)`
 
 For typical agricultural fields:
-- 100-1000 tiles
-- 10-100 rows per tile
-- Processing time: seconds to minutes (depending on field size)
+   - 100-1000 tiles
+   - 10-100 rows per tile
+   - Processing time: seconds to minutes (depending on field size)
 
 The Rust implementation provides performance-critical operations for:
-- Distance calculations
-- Hungarian algorithm execution
-- Graph traversal and merging
+   - Distance calculations
+   - Hungarian algorithm execution
+   - Graph traversal and merging
 
 This hybrid Python/Rust design ensures:
-- **Usability**: Python interface for configuration and control
-- **Performance**: Rust for computationally intensive operations
-- **Flexibility**: Easy to experiment with parameters from Python
+   - **Usability**: Python interface for configuration and control
+   - **Performance**: Rust for computationally intensive operations
+   - **Flexibility**: Easy to experiment with parameters from Python
