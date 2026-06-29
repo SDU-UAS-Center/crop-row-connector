@@ -39,3 +39,5 @@ crop-row-connector docs/test_dataset/input/row_information_global.csv docs/test_
 ```
 
 5. **View the Results**: After running the command, you will find the output files in the specified paths. You can visualize the connected crop rows and line points using georeferencer tools like QGIS.
+
+6. **Further documentation**: For documentation, start at [docs/index.rst](docs/index.rst).
