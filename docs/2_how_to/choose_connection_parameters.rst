@@ -14,11 +14,11 @@ For most agricultural applications, start with these defaults:
 
 .. code-block:: python
 
-    ccr.angle_tolerance = 0.1          # ~5.7 degrees
-    ccr.distance_tolerance = 0.12      # 12 centimeters
-    ccr.vegetation_threshold = 127     # Mid-range grayscale
-    ccr.min_unhealthy_vegetation_length = 0.1  # 10 centimeters
-    ccr.max_segment_length = 5         # 5 meters
+    angle_tolerance = 0.1                   # ~5.7 degrees
+    distance_tolerance = 0.12               # 12 centimeters
+    vegetation_threshold = 127              # Mid-range grayscale
+    min_unhealthy_vegetation_length = 0.1   # 10 centimeters
+    max_segment_length = 5                  # 5 meters
 
 Then fine-tune based on results (see Testing and Validation section).
 
@@ -30,39 +30,37 @@ The ``distance_tolerance`` parameter controls whether rows in adjacent tiles are
 What It Measures
 -----------------
 
-Distance tolerance measures the **gap between crop row endpoints** at tile boundaries. It's the maximum acceptable distance for two rows to be considered the same continuous row.
+Distance tolerance measures the **perpendicular distance between crop row lines at the endpoints** at tile boundaries. It's the maximum acceptable distance for two rows to be considered the same continuous row.
 
 Setting Distance Tolerance
 ----------------------------
 
 **Too Large** (e.g., > 0.5 m):
+
 - Risk: False connections
 - Symptom: Rows that should be separate get merged
 - Example: Two parallel rows 0.8m apart might incorrectly merge
-- Impact on engineering: Unreliable row IDs for farmer operations
+- Impact: Unreliable row IDs for farmer operations
 
 **Too Small** (e.g., < 0.05 m):
+
 - Risk: Missed connections
 - Symptom: Continuous rows get split at tile boundaries
 - Example: A row with slight offset of 0.15m gets disconnected
-- Impact on engineering: Fragmented crop data prevents analysis
+- Impact: Fragmented crop data prevents analysis
 
 Factors Affecting Distance Tolerance
 --------------------------------------
 
-**Equipment Accuracy**
-    More accurate orthomosaic = smaller tolerance needed
+**Crop Rows Bending**
+    Curved rows may require larger tolerance to account for natural offsets due to straigt lines being fitted to curved rows.
     
-    - Drone with RTK GPS: 0.05 - 0.1 m
-    - Standard drone: 0.1 - 0.2 m
-    - Vintage imagery: 0.3 - 0.5 m
+    - Straight rows: 0.05 - 0.1 m
+    - Slightly curved rows: 0.1 - 0.2 m
+    - Highly curved rows: 0.2 - 0.3 m
 
 **Tile Processing Accuracy**
     Crop Row Detector consistency affects endpoint placement
-    
-    - High-quality detector: ±5 cm accuracy → use 0.1 m tolerance
-    - Standard detector: ±10 cm accuracy → use 0.15 m tolerance
-    - Experimental detector: ±20 cm accuracy → use 0.3 m tolerance
 
 **Row Spacing**
     Minimum distance between rows limits tolerance
@@ -71,36 +69,7 @@ Factors Affecting Distance Tolerance
     - Standard spacing (0.75 m): tolerance ≤ 0.3 m
     - Wide spacing (1.5 m): tolerance ≤ 0.5 m
     
-    **Rule of thumb**: tolerance < (row_spacing / 3)
-
-**Tile Boundary Effects**
-    How rows cross tile boundaries affects measurement
-    
-    - Tile boundaries perpendicular to rows: large offsets possible → larger tolerance
-    - Tile boundaries parallel to rows: small offsets → smaller tolerance
-
-Recommended Values by Application
------------------------------------
-
-**Precision Agriculture (Variable Rate Application)**
-    - Goal: Accurately delineate rows for spraying/fertilizing
-    - Recommended: 0.05 - 0.08 m
-    - Trade-off: May miss some connections but accurate where connected
-
-**Disease Mapping**
-    - Goal: Track disease progression along rows
-    - Recommended: 0.1 - 0.15 m
-    - Trade-off: Some false merges acceptable if it preserves continuity
-
-**Yield Monitoring**
-    - Goal: Map yield variation across fields
-    - Recommended: 0.15 - 0.25 m
-    - Trade-off: More merged rows acceptable for spatial continuity
-
-**Research / Field Analysis**
-    - Goal: Understand field structure and crop organization
-    - Recommended: 0.2 - 0.3 m
-    - Trade-off: Maximize connections to see overall field structure
+    **Rule of thumb**: tolerance < (row_spacing / 2) to avoid merging adjacent rows
 
 Understanding Angle Tolerance
 =============================
@@ -121,6 +90,7 @@ This is a **sanity check** before measuring distance:
 2. Adjacent tiles should have similar row angles (or exactly the same in most cases)
 3. Rows at very different angles are **definitely not the same row**
 4. This pre-filter avoids expensive distance calculations on impossible matches
+5. Ensures that the rows along the edge of the field are not connected to rows in the middle of the field (in case of a field with a rotation)
 
 Setting Angle Tolerance
 ------------------------
@@ -138,21 +108,17 @@ Setting Angle Tolerance
 Recommended Values by Field Type
 ---------------------------------
 
-**Uniform Field (no rotation)**
+**Uniform Field (no row bending)**
     - Typical range: 0.05 - 0.1 rad (2.9 - 5.7 degrees)
     - Example: 0.1 rad - allows natural variation in detector
 
-**Field with Slight Rotation**
+**Field with Slight Row Bending**
     - Typical range: 0.1 - 0.15 rad (5.7 - 8.6 degrees)
     - Example: 0.12 rad - allows for gradual directional change
 
-**Field with Significant Rotation**
+**Field with Significant Row Bending**
     - Typical range: 0.2 - 0.3 rad (11.5 - 17 degrees)
     - Example: 0.25 rad - accommodates major field rotations
-
-**Research Setting (allow everything)**
-    - Typical range: 0.5 rad or higher
-    - Example: 1.0 rad - essentially no angular filtering
 
 Vegetation Parameters
 =====================
@@ -168,31 +134,33 @@ The ``vegetation_threshold`` (0-255 grayscale) classifies points as healthy or u
 
 **Typical Values**:
 - 127: Neutral midpoint - half as healthy, half as unhealthy
-- 100-150: Most common working range
-- <100: Very lenient - most vegetation considered unhealthy
-- >150: Very strict - most vegetation considered healthy
+- 30-240: Most common working range
+- <30: Very lenient - most vegetation considered healthy
+- >240: Very strict - most vegetation considered unhealthy (can be used ensures only the dense vegetation is classified as healthy)
 
 **How to Determine the Right Value**:
+The value depends on your crop type, growth stage, imaging conditions, and accuracy of the detector. Use the following workflow:
 
 1. Examine your vegetation data to understand the range
 2. Consider what "unhealthy" means for your crop
-3. Use domain knowledge:
-   - Stressed crops: use lower threshold (e.g., 100-120)
-   - Healthy crops: use higher threshold (e.g., 140-160)
-   - Unknown: start with 127
+3. General workflow:
+   - Start with 127 (midpoint)
+   - Adjust up or down based on visual inspection of results
 
 Setting min_unhealthy_vegetation_length
 ---------------------------------------
 
 The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealthy vegetation classification.
 
-**Purpose**: Prevent single pixels or small spots from being recorded as "disease"
+**Purpose**: Prevent single pixels or small spots from being recorded as "unhealthy segments".
 
 **Recommended Values**:
-- 0.05 m: For high-resolution imagery with small pixels
-- 0.1 m: Standard value for most applications
-- 0.2 m: Only record substantial unhealthy segments
-- 0.5 m: Only record large disease patches
+   - The value depends on your crop type, row spacing, and desired sensitivity. Use the following workflow:
+
+   - 0.05 m: For high-resolution imagery with small pixels
+   - 0.1 m: Standard value for most applications
+   - 0.2 m: Only record substantial unhealthy segments
+   - 0.5 m: Only record large disease patches
 
 Setting max_segment_length
 --------------------------
