@@ -129,14 +129,14 @@ Setting Vegetation Threshold
 The ``vegetation_threshold`` (0-255 grayscale) classifies points as healthy or unhealthy vegetation.
 
 **Interpretation**:
-- Pixels **above** threshold → healthy vegetation
-- Pixels **below** threshold → unhealthy vegetation
+   - Pixels **above** threshold → healthy vegetation
+   - Pixels **below** threshold → unhealthy vegetation
 
 **Typical Values**:
-- 127: Neutral midpoint - half as healthy, half as unhealthy
-- 30-240: Most common working range
-- <30: Very lenient - most vegetation considered healthy
-- >240: Very strict - most vegetation considered unhealthy (can be used ensures only the dense vegetation is classified as healthy)
+   - 127: Neutral midpoint - half as healthy, half as unhealthy
+   - 30-240: Most common working range
+   - <30: Very lenient - most vegetation considered healthy
+   - >240: Very strict - most vegetation considered unhealthy (can be used ensures only the dense vegetation is classified as healthy)
 
 **How to Determine the Right Value**:
 The value depends on your crop type, growth stage, imaging conditions, and accuracy of the detector. Use the following workflow:
@@ -155,28 +155,27 @@ The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealth
 **Purpose**: Prevent single pixels or small spots from being recorded as "unhealthy segments".
 
 **Recommended Values**:
-   - The value depends on your crop type, row spacing, and desired sensitivity. Use the following workflow:
-
-   - 0.05 m: For high-resolution imagery with small pixels
-   - 0.1 m: Standard value for most applications
-   - 0.2 m: Only record substantial unhealthy segments
-   - 0.5 m: Only record large disease patches
+The value depends on your crop type, spacing between two crops, and desired sensitivity. Use the following workflow:
+   - 0.05 m: standard value for sensitive detection
+   - Increase if you want to ignore small noise and only record substantial unhealthy segments
+   - Decrease or set to zero if you want to capture even the smallest unhealthy segments
 
 Setting max_segment_length
 --------------------------
 
 The ``max_segment_length`` (meters) controls spatial resolution of vegetation analysis.
+This parameter is often used in curving rows to avoid long segments representing a curved row as a single segment. 
 
 **Interpretation**: Vegetation classification is computed on segments up to this length
 
 **Trade-offs**:
-- **Smaller values** (1-2 m): Fine-grained analysis but more segments
-- **Larger values** (5-10 m): Coarser analysis but better summary view
+   - **Smaller values** (1-2 m): Rows can be curved and the result will represent the curvature better, but more segments are created
+   - **Larger values** (5-10 m): Fewer segments, but can not represent curvature well
 
 **Recommendations**:
-- Disease monitoring: 0.5 - 2 m (need detail to detect spread)
-- General field monitoring: 2 - 5 m (standard resolution)
-- Field surveys: 5 - 10 m (summary view)
+   - For most applications, 5 m is a good balance between resolution and performance
+   - Decrease the number if it is observed that the segments are too long and do not represent the curvature of the rows well
+   - Increase the number if it is observed that the segments are too short and too many segments are created, which can make analysis more difficult
 
 Testing and Validation
 ======================
@@ -188,9 +187,8 @@ Workflow for Finding Optimal Parameters
    - distance_tolerance = 0.12 m
    - angle_tolerance = 0.1 rad
 
-2. **Run on test data**:
+2. **Run on data**:
    - Use your ``docs/test_dataset/`` or a small field subset
-   - Record results in a table
 
 3. **Inspect results**:
    - Count how many rows were connected
@@ -204,7 +202,7 @@ Workflow for Finding Optimal Parameters
 
 5. **Document findings**:
    - Record your final parameters
-   - Note which field/equipment they work for
+   - Note which field/equipment they work for (helps future processing in similar conditions)
 
 Validation Checklist
 ---------------------
@@ -226,20 +224,6 @@ After choosing parameters, validate with these checks:
 - [ ] Results consistent if run multiple times
 - [ ] Small parameter changes don't cause drastic result changes
 
-Quick Reference Table
-======================
-
-**For Different Equipment/Conditions**:
-
-.. csv-table:: Parameter Recommendations by Field Type
-   :header: "Condition", "distance_tolerance", "angle_tolerance", "Use Case"
-   :widths: 25, 20, 20, 35
-
-   "RTK-equipped drone", "0.05-0.08 m", "0.08 rad", "Precision agriculture"
-   "Standard drone", "0.1-0.15 m", "0.1 rad", "Typical field operations"
-   "Vintage imagery", "0.2-0.3 m", "0.15 rad", "Historical field analysis"
-   "Research/unknown", "0.1-0.2 m", "0.12 rad", "General-purpose analysis"
-
 Common Issues and Solutions
 ============================
 
@@ -248,68 +232,68 @@ Common Issues and Solutions
 *Symptoms*: Parallel rows combine into single rows
 
 *Solutions*:
-1. Reduce ``distance_tolerance`` (try 0.08 instead of 0.12)
-2. Check if rows truly are the same (visual inspection)
-3. Verify row spacing > 3 × distance_tolerance
+   1. Reduce ``distance_tolerance`` (eg. try 0.08 instead of 0.12)
+   2. Check if rows truly are the same (visual inspection)
+   3. Verify row spacing > 2 × distance_tolerance
 
 **Rows break at tile boundaries**
 
 *Symptoms*: Continuous rows split into fragments
 
 *Solutions*:
-1. Increase ``distance_tolerance`` (try 0.15 instead of 0.12)
-2. Check equipment accuracy - does it guarantee <tolerance positioning?
-3. Verify angle_tolerance isn't filtering valid rows
+   1. Increase ``distance_tolerance`` (eg. try 0.15 instead of 0.12)
+   2. Check equipment accuracy - does it guarantee <tolerance positioning?
+   3. Verify angle_tolerance isn't filtering valid rows
 
 **Angle mismatches**
 
 *Symptoms*: "Expected connection" message for misaligned rows
 
 *Solutions*:
-1. Check field for actual rotation
-2. Increase ``angle_tolerance`` if rotation is expected (try 0.15-0.2 rad)
-3. Verify detector is producing consistent angles
+   1. Check field for actual rotation
+   2. Increase ``angle_tolerance`` if rotation is expected (eg. try 0.15-0.2 rad)
+   3. Verify detector is producing consistent angles
 
 **Irregular vegetation classifications**
 
 *Symptoms*: Noise or unrealistic health segments
 
 *Solutions*:
-1. Increase ``min_unhealthy_vegetation_length`` to filter noise
-2. Adjust ``vegetation_threshold`` based on typical crop conditions
-3. Increase ``max_segment_length`` for coarser classification
+   1. Increase ``min_unhealthy_vegetation_length`` to filter noise
+   2. Adjust ``vegetation_threshold`` based on typical crop conditions
+   3. Increase ``max_segment_length`` for coarser classification
 
 Example: Optimizing for Your Field
 ===================================
 
-**Scenario**: Corn field, standard drone, narrow row spacing (0.5 m)
+**Scenario**: Potato field, narrow row spacing (0.2 m)
 
 *Initial parameters*:
 
 .. code-block:: python
 
-    ccr.distance_tolerance = 0.12
-    ccr.angle_tolerance = 0.1
+    distance_tolerance = 0.15
+    angle_tolerance = 0.1
 
 *Test 1 Results*: Adjacent rows merged into single rows
 
-*Analysis*: 0.12 m is too large for 0.5 m spacing
+*Analysis*: 0.15 m is too large for 0.2 m spacing
 
 *Adjust*:
 
 .. code-block:: python
 
-    ccr.distance_tolerance = 0.08
+    distance_tolerance = 0.04
 
 *Test 2 Results*: Some rows break at tile boundaries
 
-*Analysis*: 0.08 m is too small for drone accuracy
+*Analysis*: 0.04 m is too small for drone accuracy
 
 *Final parameters*:
 
 .. code-block:: python
 
-    ccr.distance_tolerance = 0.10
-    ccr.angle_tolerance = 0.1
+    distance_tolerance = 0.8
+    angle_tolerance = 0.1
 
 *Validation*: All rows properly connected with no false merges ✓
