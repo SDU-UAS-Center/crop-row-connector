@@ -144,6 +144,7 @@ The value depends on your crop type, growth stage, imaging conditions, and accur
 1. Examine your vegetation data to understand the range
 2. Consider what "unhealthy" means for your crop
 3. General workflow:
+   
    - Start with 127 (midpoint)
    - Adjust up or down based on visual inspection of results
 
@@ -154,7 +155,9 @@ The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealth
 
 **Purpose**: Prevent single pixels or small spots from being recorded as "unhealthy segments".
 
-**Recommended Values**: The value depends on your crop type, spacing between two crops, and desired sensitivity. Use the following workflow:
+**Recommended Values**: 
+The value depends on your crop type, spacing between two crops, and desired sensitivity. Use the following workflow:
+
    - 0.05 m: standard value for sensitive detection
    - Increase if you want to ignore small noise and only record substantial unhealthy segments
    - Decrease or set to zero if you want to capture even the smallest unhealthy segments
