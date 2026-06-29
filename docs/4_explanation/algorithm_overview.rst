@@ -131,15 +131,15 @@ Vegetation Parameters
 **min_unhealthy_vegetation_length** (meters)
     Minimum spatial extent for unhealthy vegetation to be recorded as a segment. 
        - Default: 0.1 m
-       - Prevents noise from being recorded as disease
+       - Prevents noise from being recorded as unhealthy vegetation
        - Filter for biologically meaningful segments
 
 **max_segment_length** (meters)
     Maximum length for vegetation classification segments.
        - Default: 5 m
        - Affects spatial resolution of vegetation analysis
-       - Larger values → coarser vegetation classification
-       - Smaller values → finer vegetation classification
+       - Larger values → The crop row is treated as a single segment, potentially missing small curvatures in the row
+       - Smaller values → Segments are broken into smaller pieces, allowing for more detailed analysis of vegetation health along the row even when curved
 
 Algorithm Complexity
 ====================
@@ -147,15 +147,10 @@ Algorithm Complexity
 Performance Considerations
 ---------------------------
 
-The connection process has complexity roughly proportional to:
-   - Number of tiles: :math:`N_{tiles}`
-   - Rows per tile: :math:`R_{avg}`
-   - Connections per pair: Hungarian Algorithm is :math:`O(R^3)`
-
 For typical agricultural fields:
    - 100-1000 tiles
    - 10-100 rows per tile
-   - Processing time: seconds to minutes (depending on field size)
+   - Processing time: seconds to minutes (depending on field size, and tile size)
 
 The Rust implementation provides performance-critical operations for:
    - Distance calculations
@@ -165,4 +160,3 @@ The Rust implementation provides performance-critical operations for:
 This hybrid Python/Rust design ensures:
    - **Usability**: Python interface for configuration and control
    - **Performance**: Rust for computationally intensive operations
-   - **Flexibility**: Easy to experiment with parameters from Python
