@@ -20,9 +20,6 @@ Common Tasks
 **My results don't look right**
    See `Choose Connection Parameters <choose_connection_parameters.rst>`_ to understand what's happening and how to adjust settings.
 
-**I want to integrate this into an application**
-   Read `Using as a Library <using_as_library.rst>`_ for patterns and examples for different use cases.
-
 **I want to understand how the algorithm works**
    Instead, go to `Algorithm Overview <../4_explanation/algorithm_overview.rst>`_ for conceptual explanation.
 
