@@ -8,11 +8,6 @@ Reference
 
 Use these guides when you need to know the exact specification of classes, methods, parameters, and data formats.
 
-.. toctree::
-   :maxdepth: 2
-
-   api_reference
-
 What's in Reference
 ===================
 

@@ -9,11 +9,6 @@ Explanation
 Read these to develop deeper understanding of the tool's design and algorithms. 
 Use these to make informed decisions about parameters and approaches.
 
-.. toctree::
-   :maxdepth: 2
-
-   algorithm_overview
-
 When to Read Explanation
 ========================
 
