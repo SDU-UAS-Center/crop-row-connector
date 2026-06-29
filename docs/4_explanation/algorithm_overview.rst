@@ -18,9 +18,10 @@ When processing orthomosaic images of agricultural fields:
 4. These fragments need to be **reconnected** to form continuous crop row lines
 
 Without connection, analysis becomes impossible:
-- Incomplete row geometry
-- Fragmented vegetation data
-- Loss of spatial continuity
+   - Incomplete row geometry
+   - Fragmented vegetation data
+   - Loss of spatial continuity
+   - No overlap handling between tiles
 
 The Solution: Multi-Step Connection Algorithm
 ----------------------------------------------
@@ -31,10 +32,9 @@ Stage 1: Tile Analysis
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Each tile is analyzed to extract:
-
-- **Tile Position**: Location in the field grid (X, Y)
-- **Rows**: Detected crop rows with their endpoints and geometry
-- **Angle**: The predominant direction of crop rows in this tile
+   - **Tile Position**: Location in the field grid (X, Y)
+   - **Rows**: Detected crop rows with their endpoints and geometry
+   - **Angle**: The predominant direction of crop rows in this tile
 
 This creates a structured representation of row data that can be compared across tiles.
 
@@ -61,15 +61,14 @@ Stage 3: Global Graph Construction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Connections from all pairwise matches are merged into a global graph where:
-
-- **Nodes** are individual row segments (tile + row number)
-- **Edges** represent validated connections
-- **Graph traversal** identifies connected components (complete crop rows)
+   - **Nodes** are individual row segments (tile + row number)
+   - **Edges** represent validated connections
+   - **Graph traversal** identifies connected components (complete crop rows)
 
 Result: Fragmented rows become continuous crop row objects, each with:
-- All connected segments across tiles
-- Complete spatial geometry
-- Associated vegetation data points
+   - All connected segments across tiles
+   - Complete spatial geometry
+   - Associated vegetation data points
 
 Geometric Matching Details
 ============================
@@ -78,29 +77,27 @@ How Distance is Calculated
 ----------------------------
 
 The algorithm measures distance between two rows as:
-
-1. **Extract endpoints** from both rows (start and end points)
-2. **Identify "close" and "far" endpoints** by finding maximum pairwise distance
-3. **Compute perpendicular distances** from one row's close point to the other row's line
-4. **Average the reciprocal distances** for a symmetric measure
+   1. **Extract endpoints** from both rows (start and end points)
+   2. **Identify "close" and "far" endpoints** by finding maximum pairwise distance
+   3. **Compute perpendicular distances** from one row's close point to the other row's line
+   4. **Average the reciprocal distances** for a symmetric measure
 
 This approach is robust because:
-- It doesn't require exact endpoint alignment
-- It tolerates slight variations in row endpoint positioning
-- It captures whether rows are "roughly parallel and close"
+   - It doesn't require exact endpoint alignment
+   - It tolerates slight variations in row endpoint positioning
+   - It captures whether rows are "roughly parallel and close"
 
 Why Angles Matter
 ------------------
 
 Crop rows within a field typically run in consistent directions:
-
-- **Same tile**: All rows share the same angle (field-level property)
-- **Adjacent tiles**: Usually have the same angle
-- **Exception**: Field rotations between tiles (rare but possible)
+   - **Same tile**: All rows share the same angle (field-level property)
+   - **Adjacent tiles**: Usually have the same angle
+   - **Exception**: Field rotations between tiles (rare but possible, as can be seen in the test dataset)
 
 The ``angle_tolerance`` parameter filters out impossible matches:
-- Rows at completely different angles are unlikely to be the same row
-- Typical tolerance: 0.1 radians (~5.7 degrees)
+   - Rows at completely different angles are unlikely to be the same row
+   - Typical tolerance: 0.1 radians (~5.7 degrees)
 
 Parameters and Their Meaning
 =============================
@@ -110,19 +107,17 @@ Connection Parameters
 
 **distance_tolerance** (meters)
     Maximum allowed distance between row endpoints for them to be considered connected.
-    
-    - Default: 0.1 m
-    - Typical range: 0.05-0.5 m
-    - Higher values → more connections (risk of false matches)
-    - Lower values → fewer connections (risk of missing real matches)
+       - Default: 0.1 m
+       - Typical range: 0.05-0.5 m
+       - Higher values → more connections (risk of false matches)
+       - Lower values → fewer connections (risk of missing real matches)
 
 **angle_tolerance** (radians)
     Maximum allowed angle difference between rows for connection.
-    
-    - Default: 0.1 rad (~5.7 degrees)
-    - Typical range: 0.05-0.2 rad
-    - Higher values → more flexible angle matching
-    - Lower values → stricter angular requirements
+       - Default: 0.1 rad (~5.7 degrees)
+       - Typical range: 0.05-0.2 rad
+       - Higher values → more flexible angle matching
+       - Lower values → stricter angular requirements
 
 Vegetation Parameters
 ---------------------
