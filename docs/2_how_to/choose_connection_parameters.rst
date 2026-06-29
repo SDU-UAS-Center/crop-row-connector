@@ -185,23 +185,28 @@ Workflow for Finding Optimal Parameters
 ----------------------------------------
 
 1. **Start with defaults**:
+
    - distance_tolerance = 0.12 m
    - angle_tolerance = 0.1 rad
 
 2. **Run on data**:
+
    - Use your ``docs/test_dataset/`` or a small field subset
 
 3. **Inspect results**:
+
    - Count how many rows were connected
    - Visually check for false merges (rows that shouldn't connect)
    - Visually check for false breaks (rows that should connect but don't)
 
 4. **Adjust and iterate**:
+
    - Too many false merges? → Lower distance_tolerance
    - Too many false breaks? → Raise distance_tolerance
    - Misaligned connections? → Adjust angle_tolerance
 
 5. **Document findings**:
+
    - Record your final parameters
    - Note which field/equipment they work for (helps future processing in similar conditions)
 
