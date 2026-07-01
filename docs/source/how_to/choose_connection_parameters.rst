@@ -1,14 +1,13 @@
-================================
 Choosing Connection Parameters
-================================
+==============================
 
 Overview
-========
+--------
 
 The success of crop row connection depends on choosing appropriate tolerance parameters. This guide helps you select values for your specific field conditions and equipment.
 
 Quick Start
-===========
+-----------
 
 For most agricultural applications, start with these defaults:
 
@@ -23,17 +22,17 @@ For most agricultural applications, start with these defaults:
 Then fine-tune based on results (see Testing and Validation section).
 
 Understanding Distance Tolerance
-=================================
+--------------------------------
 
 The ``distance_tolerance`` parameter controls whether rows in adjacent tiles are considered connected.
 
 What It Measures
------------------
+^^^^^^^^^^^^^^^^
 
 Distance tolerance measures the **perpendicular distance between crop row lines at the endpoints** at tile boundaries. It's the maximum acceptable distance for two rows to be considered the same continuous row.
 
 Setting Distance Tolerance
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Too Large** (e.g., > 0.5 m):
 
@@ -50,7 +49,7 @@ Setting Distance Tolerance
 - Impact: Fragmented crop data prevents analysis
 
 Factors Affecting Distance Tolerance
---------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Crop Rows Bending**
     Curved rows may require larger tolerance to account for natural offsets due to straight lines being fitted to curved rows.
@@ -72,17 +71,17 @@ Factors Affecting Distance Tolerance
     **Rule of thumb**: tolerance < (row_spacing / 2) to avoid merging adjacent rows
 
 Understanding Angle Tolerance
-=============================
+-----------------------------
 
 The ``angle_tolerance`` parameter controls whether rows in adjacent tiles are **aligned directionally** before considering distance.
 
 What It Measures
------------------
+^^^^^^^^^^^^^^^^
 
 Angle tolerance measures the **maximum rotation difference** between crop rows in adjacent tiles. It filters out completely misaligned rows before computing distances.
 
 Why Angle Matters
-------------------
+^^^^^^^^^^^^^^^^^
 
 This is a **sanity check** before measuring distance:
 
@@ -93,7 +92,7 @@ This is a **sanity check** before measuring distance:
 5. Ensures that the rows along the edge of the field are not connected to rows in the middle of the field (in case of a field with a rotation)
 
 Setting Angle Tolerance
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Too Large** (e.g., > 0.3 rad = 17°):
 - Risk: Compares rows that clearly run different directions
@@ -106,7 +105,7 @@ Setting Angle Tolerance
 - Impact: Fragmented rows at tile boundaries
 
 Recommended Values by Field Type
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Uniform Field (no row bending)**
     - Typical range: 0.05 - 0.1 rad (2.9 - 5.7 degrees)
@@ -121,10 +120,10 @@ Recommended Values by Field Type
     - Example: 0.25 rad - accommodates major field rotations
 
 Vegetation Parameters
-=====================
+---------------------
 
 Setting Vegetation Threshold
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``vegetation_threshold`` (0-255 grayscale) classifies points as healthy or unhealthy vegetation.
 
@@ -149,7 +148,7 @@ The value depends on your crop type, growth stage, imaging conditions, and accur
    - Adjust up or down based on visual inspection of results
 
 Setting min_unhealthy_vegetation_length
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealthy vegetation classification.
 
@@ -162,7 +161,7 @@ The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealth
    - Decrease or set to zero if you want to capture even the smallest unhealthy segments
 
 Setting max_segment_length
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``max_segment_length`` (meters) controls spatial resolution of vegetation analysis.
 This parameter is often used in curving rows to avoid long segments representing a curved row as a single segment.
@@ -179,10 +178,10 @@ This parameter is often used in curving rows to avoid long segments representing
    - Increase the number if it is observed that the segments are too short and too many segments are created, which can make analysis more difficult
 
 Testing and Validation
-======================
+----------------------
 
 Workflow for Finding Optimal Parameters
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. **Start with defaults**:
 
@@ -211,7 +210,7 @@ Workflow for Finding Optimal Parameters
    - Note which field/equipment they work for (helps future processing in similar conditions)
 
 Validation Checklist
----------------------
+^^^^^^^^^^^^^^^^^^^^
 
 After choosing parameters, validate with these checks:
 
@@ -231,7 +230,7 @@ After choosing parameters, validate with these checks:
    - Small parameter changes don't cause drastic result changes
 
 Common Issues and Solutions
-============================
+---------------------------
 
 **Too many rows are being merged**
 
@@ -270,7 +269,7 @@ Common Issues and Solutions
    3. Increase ``max_segment_length`` for coarser classification
 
 Example: Optimizing for Your Field
-===================================
+----------------------------------
 
 **Scenario**: Potato field, narrow row spacing (0.2 m)
 
