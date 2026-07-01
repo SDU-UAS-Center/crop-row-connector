@@ -25,6 +25,10 @@ dependencies = [
     "pyshp",
 ]
 
+[tool.uv]
+# Rebuild package when any rust files change
+cache-keys = [{file = "pyproject.toml"}, {file = "rust/Cargo.toml"}, {file = "**/*.rs"}]
+
 [tool.maturin]
 module-name = "crop_row_connector._native"
 
