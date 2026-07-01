@@ -25,7 +25,3 @@ Common Tasks
 
 **I need technical API details**
    See `API Reference <../3_reference/api_reference.rst>`_ for complete API documentation.
-
-
-
-

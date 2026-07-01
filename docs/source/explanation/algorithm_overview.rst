@@ -129,7 +129,7 @@ Vegetation Parameters
        - Lower values → more pixels classified as healthy
 
 **min_unhealthy_vegetation_length** (meters)
-    Minimum spatial extent for unhealthy vegetation to be recorded as a segment. 
+    Minimum spatial extent for unhealthy vegetation to be recorded as a segment.
        - Default: 0.1 m
        - Prevents noise from being recorded as unhealthy vegetation
        - Filter for biologically meaningful segments

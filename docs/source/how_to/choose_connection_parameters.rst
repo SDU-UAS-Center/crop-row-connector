@@ -53,8 +53,8 @@ Factors Affecting Distance Tolerance
 --------------------------------------
 
 **Crop Rows Bending**
-    Curved rows may require larger tolerance to account for natural offsets due to straigt lines being fitted to curved rows.
-    
+    Curved rows may require larger tolerance to account for natural offsets due to straight lines being fitted to curved rows.
+
     - Straight rows: 0.05 - 0.1 m
     - Slightly curved rows: 0.1 - 0.2 m
     - Highly curved rows: 0.2 - 0.3 m
@@ -68,7 +68,7 @@ Factors Affecting Distance Tolerance
     - Narrow spacing (0.5 m): tolerance ≤ 0.2 m
     - Standard spacing (0.75 m): tolerance ≤ 0.3 m
     - Wide spacing (1.5 m): tolerance ≤ 0.5 m
-    
+
     **Rule of thumb**: tolerance < (row_spacing / 2) to avoid merging adjacent rows
 
 Understanding Angle Tolerance
@@ -144,7 +144,7 @@ The value depends on your crop type, growth stage, imaging conditions, and accur
 1. Examine your vegetation data to understand the range
 2. Consider what "unhealthy" means for your crop
 3. General workflow:
-   
+
    - Start with 127 (midpoint)
    - Adjust up or down based on visual inspection of results
 
@@ -155,7 +155,7 @@ The ``min_unhealthy_vegetation_length`` (meters) filters out noise from unhealth
 
 **Purpose**: Prevent single pixels or small spots from being recorded as "unhealthy segments".
 
-**Recommended Values**: 
+**Recommended Values**:
    - The value depends on your crop type, spacing between two crops, and desired sensitivity. Use the following workflow:
    - 0.05 m: standard value for sensitive detection
    - Increase if you want to ignore small noise and only record substantial unhealthy segments
@@ -165,7 +165,7 @@ Setting max_segment_length
 --------------------------
 
 The ``max_segment_length`` (meters) controls spatial resolution of vegetation analysis.
-This parameter is often used in curving rows to avoid long segments representing a curved row as a single segment. 
+This parameter is often used in curving rows to avoid long segments representing a curved row as a single segment.
 
 **Interpretation**: Vegetation classification is computed on segments up to this length
 
