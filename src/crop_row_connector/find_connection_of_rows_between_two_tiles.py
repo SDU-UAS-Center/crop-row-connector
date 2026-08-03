@@ -1,5 +1,6 @@
 """Find connection of rows between two tiles."""
 
+from dataclasses import dataclass, field
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -8,16 +9,19 @@ import numpy as np
 from crop_row_connector.Hungarian_algorithm import hungarian_algorithm
 
 
+@dataclass
 class Tile:
     """Hold tile information."""
 
-    def __init__(self, tile_number: int, position: list[int], angle: float, rows: np.ndarray) -> None:
-        self.tile_number = tile_number
-        self.position = position
-        self.angle = angle
+    tile_number: int
+    position: list[int]
+    angle: float
+    rows: np.ndarray
+    unused_rows: list[int] = field(init=False)
 
-        self.rows = rows
-        self.unused_rows = rows[:, 0].tolist()  # Row numbers
+    def __post_init__(self) -> None:
+        """Create unused rows."""
+        self.unused_rows = self.rows[:, 0].tolist()
 
 
 class FindConnectionOfRowsBetweenTwoTiles:
