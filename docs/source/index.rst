@@ -100,10 +100,5 @@ Index
    how_to
    reference
    CLI
+   explanation
    contributing
-   notes
-   2_how_to/preparing_your_data
-   2_how_to/choose_connection_parameters
-   2_how_to/using_as_library
-   4_explanation/algorithm_overview
-   3_reference/api_reference

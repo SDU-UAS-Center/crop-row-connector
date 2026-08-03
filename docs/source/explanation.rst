@@ -15,3 +15,9 @@ Topics Covered
 **Algorithm Overview**
     How crop rows are detected as fragments, how the Hungarian algorithm matches fragments,
     and how these matches are merged into complete crop rows.
+
+.. toctree::
+    :caption: Table of Contents
+    :maxdepth: 1
+
+    explanation/algorithm_overview
