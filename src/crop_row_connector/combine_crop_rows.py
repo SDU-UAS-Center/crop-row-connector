@@ -71,21 +71,9 @@ class CombineCropRows:
         self.ccrc = CombineCropRowsFromConnections()
 
     def _ensure_parent_directory_exist(self, path: Path) -> None:
-        """
-        Ensure the parent directory of `path` exists.
-
-        Notes
-        -----
-        - Only creates directories if they do not already exist.
-
-        Parameters
-        ----------
-        path : Path
-            The path for which to ensure the parent directory exists.
-        """
         path.parent.mkdir(parents=True, exist_ok=True)
 
-    def load_csv(self, path: str) -> np.ndarray:
+    def load_csv(self, path: Path) -> np.ndarray:
         """
         Load a CSV file containing row information into a NumPy array.
 
@@ -94,32 +82,22 @@ class CombineCropRows:
         - Each row corresponds to a crop row.
         - Columns contain:
             [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
-
-        Parameters
-        ----------
-        path : str
-            The file path to the CSV file containing row information.
-
-        Returns
-        -------
-        NDArray[np.float64]
-            2D array where each row corresponds to a crop row.
         """
         return pd.read_csv(path).to_numpy(dtype=np.float64)
 
-    def seperate_row_information_to_tile(self, row_information: np.ndarray) -> dict[int, Tile]:
+    def separate_row_information_to_tile(self, row_information: np.ndarray) -> dict[int, Tile]:
         """
         Split row information into tile objects keyed by tile number.
 
         Parameters
         ----------
-        row_information : NDArray[np.float64]
+        row_information
             A NumPy array containing row information for all tiles. Each row corresponds to a crop row and contains the following columns:
             [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
 
         Returns
         -------
-        dict[int, tile]
+        dict[int, Tile]
             Dictionary mapping each tile number to a tile object.
         """
         tile_numbers = np.unique(row_information[:, 0]).astype(int)
@@ -144,9 +122,9 @@ class CombineCropRows:
 
         Parameters
         ----------
-        row_information : np.ndarray
+        row_information
             2D array with row information including tile positions.
-        tiles : dict[int, tile]
+        tiles
             Dictionary mapping tile numbers to tile objects.
 
         Returns
@@ -173,9 +151,9 @@ class CombineCropRows:
 
         Parameters
         ----------
-        grid : np.ndarray[int32]
+        grid
             2D array representing the tile grid. Each entry is a tile number, or -1 for empty cells.
-        tiles : dict[int, tile]
+        tiles
             Dictionary mapping tile numbers to tile objects.
         """
         # Find all positions in the grid that contain a tile
@@ -204,9 +182,9 @@ class CombineCropRows:
 
         Parameters
         ----------
-        tile_1 : tile
+        tile_1
             The first tile object to connect.
-        tile_2 : tile
+        tile_2
             The second tile object to connect.
         """
         # Check if the angle of the two tiles is close enough
@@ -220,7 +198,7 @@ class CombineCropRows:
 
         Parameters
         ----------
-        connected_crop_rows : np.ndarray
+        connected_crop_rows
             2D array containing connected crop row information.
         """
         # Write the connected crop rows to a csv file
@@ -248,7 +226,7 @@ class CombineCropRows:
     def merge_all_points_in_all_crop_rows_remove(
         self,
         connected_crop_rows: np.ndarray,
-        path_points_in_rows: str,
+        path_points_in_rows: Path,
         row_information: np.ndarray,
         tiles: dict[int, Tile],
     ) -> pd.DataFrame:
@@ -258,13 +236,13 @@ class CombineCropRows:
 
         Parameters
         ----------
-        connected_crop_rows : np.ndarray
+        connected_crop_rows
             2D array containing connected crop row information.
-        path_points_in_rows : str
+        path_points_in_rows
             Path to CSV containing raw vegetation points per row.
-        row_information : np.ndarray
+        row_information
             Original row information array.
-        tiles : dict[int, tile]
+        tiles
             Dictionary mapping tile numbers to tile objects.
 
         Returns
@@ -312,7 +290,7 @@ class CombineCropRows:
             DF_crop_rows_new.to_csv(self.output_path_vegetation_points, index=False)
         return DF_crop_rows_new
 
-    def add_segment(self, target: list[list[np.ndarray]], start_idx: int, end_idx: int, coords: np.ndarray) -> None:
+    def _add_segment(self, target: list[list[np.ndarray]], start_idx: int, end_idx: int, coords: np.ndarray) -> None:
         if self.max_segment_length is None or self.max_segment_length <= 0:
             target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
             return
@@ -333,7 +311,7 @@ class CombineCropRows:
         if not added:
             target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
 
-    def run_distance(self, s: int, e: int, coords: np.ndarray) -> float:
+    def _run_distance(self, s: int, e: int, coords: np.ndarray) -> float:
         dx = coords[s][0] - coords[e][0]
         dy = coords[s][1] - coords[e][1]
         return math.hypot(dx, dy)
@@ -351,7 +329,7 @@ class CombineCropRows:
 
         Parameters
         ----------
-        DF_crop_rows : pd.DataFrame
+        DF_crop_rows
             DataFrame containing at least ['row', 'x', 'y', 'vegetation'].
 
         Returns
@@ -359,9 +337,9 @@ class CombineCropRows:
         list[dict]
             List of segment dictionaries:
             {
-                "row_id": int,
-                "healthy": list[[[x1, y1], [x2, y2]]],
-                "unhealthy": list[[[x1, y1], [x2, y2]]]
+            "row_id": int,
+            "healthy": list[[[x1, y1], [x2, y2]]],
+            "unhealthy": list[[[x1, y1], [x2, y2]]]
             }
         """
         writer_healthy = None
@@ -394,7 +372,7 @@ class CombineCropRows:
             runs.append((run_state, run_start, n - 1))
             # If no healthy runs exist, everything is unhealthy
             if not any(is_healthy for is_healthy, _, _ in runs):
-                self.add_segment(unhealthy_lines, 0, n - 1, coords)
+                self._add_segment(unhealthy_lines, 0, n - 1, coords)
             else:
                 # Merge short unhealthy runs into neighboring healthy runs
                 merged_runs: list[tuple[bool, int, int]] = []
@@ -402,7 +380,7 @@ class CombineCropRows:
                 while i < len(runs):
                     is_healthy, s, e = runs[i]
                     if not is_healthy:
-                        dist = self.run_distance(s, e, coords)
+                        dist = self._run_distance(s, e, coords)
                         if (
                             self.min_unhealthy_vegetation_length is not None
                             and dist < self.min_unhealthy_vegetation_length
@@ -432,9 +410,9 @@ class CombineCropRows:
                 # Emit final segments (with max-length splitting applied)
                 for is_healthy, s, e in merged_runs:
                     if is_healthy:
-                        self.add_segment(healthy_lines, s, e, coords)
+                        self._add_segment(healthy_lines, s, e, coords)
                     else:
-                        self.add_segment(unhealthy_lines, s, e, coords)
+                        self._add_segment(unhealthy_lines, s, e, coords)
             segments.append(
                 {
                     "row_id": int(crop_row_id),
@@ -504,9 +482,19 @@ class CombineCropRows:
             print("!!!!!! length is nan")
         return total_length, healthy_length, unhealthy_length
 
-    def main(self, path_row_information: str, path_points_in_rows: str) -> None:
+    def connect_crop_rows(self, path_row_information: Path, path_points_in_rows: Path) -> None:
+        """
+        Execute the complete crop row connection pipeline. And save desired output.
+
+        Parameters
+        ----------
+        path_row_information
+            Path to CSV with row information. Format: [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
+        path_points_in_rows
+            Path to CSV with vegetation points. Format: [tile_number, row_number, x, y, vegetation]
+        """
         row_information = self.load_csv(path_row_information)
-        tiles = self.seperate_row_information_to_tile(row_information)
+        tiles = self.separate_row_information_to_tile(row_information)
         grid = self.create_tile_grid(row_information, tiles)
         self.connect_rows_in_tiles(grid, tiles)
         self.ccrc.sort_connected_crop_rows()

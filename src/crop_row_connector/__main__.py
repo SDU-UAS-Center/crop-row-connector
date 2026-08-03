@@ -103,7 +103,7 @@ def _main() -> None:
         max_workers=args.max_workers,
     )
     ccr.ccbt.distance_tolerance = args.distance_tolerance
-    ccr.main(args.path_row_information, args.path_points_in_rows)
+    ccr.connect_crop_rows(args.path_row_information, args.path_points_in_rows)
 
 
 if __name__ == "__main__":
