@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from crop_row_connector.Hungarian_algorithm import hungarian_algorithm
@@ -25,7 +24,7 @@ class Tile:
 
 
 class FindConnectionOfRowsBetweenTwoTiles:
-    """Find connection of rows between two tiles."""
+    """Find connection of rows between two tiles. Based on the Hungarian algorithm."""
 
     def __init__(self, distance_tolerance: float) -> None:
         self.distance_tolerance = distance_tolerance
@@ -33,9 +32,8 @@ class FindConnectionOfRowsBetweenTwoTiles:
         self.removed_padded_connections = 0
 
     def calculate_connections_between_2_tiles(self, tile_1: Tile, tile_2: Tile) -> np.ndarray:
-        """Calculate the connections between two tiles based on the edges of the tiles."""
-        cost_mat_hung, cost_mat_dist = self.cost_matrix_global(tile_1.rows, tile_2.rows)
-
+        """Find all valid row-to-row connections between two adjacent tiles."""
+        cost_mat_hung, cost_mat_dist = self._cost_matrix_global(tile_1.rows, tile_2.rows)
         connection_matrix = hungarian_algorithm(cost_mat_hung)
         connection_matrix = self.remove_padded_rows_cols(
             tile_1.rows,
@@ -44,10 +42,9 @@ class FindConnectionOfRowsBetweenTwoTiles:
             cost_mat_dist,
         )
         self.keep_track_of_unused_rows_in_tiles(tile_1, tile_2, connection_matrix)
-
         return connection_matrix
 
-    def cost_matrix_global(self, tile_1_rows: np.ndarray, tile_2_rows: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _cost_matrix_global(self, tile_1_rows: np.ndarray, tile_2_rows: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         largest_length = np.max([tile_1_rows.shape[0], tile_2_rows.shape[0]])
         cost_mat_hung = np.zeros((largest_length, largest_length))
         cost_mat_dist = np.zeros((largest_length, largest_length))
@@ -59,59 +56,32 @@ class FindConnectionOfRowsBetweenTwoTiles:
                     cost_mat_hung[i, j] = dist
                 else:
                     cost_mat_hung[i, j] = self.distance_tolerance
-
         return cost_mat_hung, cost_mat_dist
 
     def distance_between_rows(self, row_1: np.ndarray, row_2: np.ndarray) -> float:
         """Calculate the distance between two rows as the difference between the point in one row and the two other points in the other row."""
-        row_1_far, row_2_far, row_1_close, row_2_close = self.determine_points_relations(row_1, row_2)
-
+        row_1_far, row_2_far, row_1_close, row_2_close = self._determine_points_relations(row_1, row_2)
         dist_vec1 = self.distance_between_point_and_line(row_2_close, row_1_close, row_1_far)
         dist_vec2 = self.distance_between_point_and_line(row_1_close, row_2_close, row_2_far)
         avg_dist = float(np.linalg.norm(dist_vec1) + np.linalg.norm(dist_vec2)) / 2
-
-        if row_1[0] == 9 and row_2[0] == 0 and False:
-            plt.scatter(row_1_close[0], row_1_close[1], color="blue")
-            plt.scatter(row_1_far[0], row_1_far[1], color="red")
-            plt.scatter(row_2_close[0], row_2_close[1], color="green")
-            plt.scatter(row_2_far[0], row_2_far[1], color="yellow")
-            plt.plot([row_1_close[0], row_1_far[0]], [row_1_close[1], row_1_far[1]], color="red")
-            plt.plot([row_2_close[0], row_2_far[0]], [row_2_close[1], row_2_far[1]], color="green")
-            plt.plot(
-                [row_2_close[0], row_2_close[0] - dist_vec1[0]],
-                [row_2_close[1], row_2_close[1] - dist_vec1[1]],
-                color="black",
-            )
-            plt.plot(
-                [row_1_close[0], row_1_close[0] - dist_vec2[0]],
-                [row_1_close[1], row_1_close[1] - dist_vec2[1]],
-                color="black",
-            )
-            plt.axis("equal")
-            plt.show()
-
         return avg_dist
 
-    def determine_points_relations(self, row_1: np.ndarray, row_2: np.ndarray) -> tuple[Any, Any, Any, Any]:
+    def _determine_points_relations(self, row_1: np.ndarray, row_2: np.ndarray) -> tuple[Any, Any, Any, Any]:
         largest_distance = [0, 0, 0]
         row_1_re = row_1[1:].reshape(-1, 2)
         row_2_re = row_2[1:].reshape(-1, 2)
-
         # minus 1 is to not use the middle point of the lines
         for i in range(0, row_1_re.shape[0] - 1):
             for j in range(0, row_2_re.shape[0] - 1):
                 distance = np.sqrt((row_1_re[i][0] - row_2_re[j][0]) ** 2 + (row_1_re[i][1] - row_2_re[j][1]) ** 2)
                 if distance > largest_distance[0]:
                     largest_distance = [distance, i, j]
-
         row_1_far = row_1_re[largest_distance[1]]
         row_2_far = row_2_re[largest_distance[2]]
-
         if largest_distance[1] == 0:
             row_1_close = row_1_re[1]
         else:
             row_1_close = row_1_re[0]
-
         if largest_distance[2] == 0:
             row_2_close = row_2_re[1]
         else:
@@ -126,7 +96,6 @@ class FindConnectionOfRowsBetweenTwoTiles:
         vec_point_close_point = point - line_point_close
         projection = (np.dot(vec_point_close_point, vec_line) / np.dot(vec_line, vec_line)) * vec_line
         dist_vec = vec_point_close_point - projection
-
         return dist_vec
 
     def remove_padded_rows_cols(
@@ -148,7 +117,6 @@ class FindConnectionOfRowsBetweenTwoTiles:
                 connection_matrix[i, 0] = -1
                 connection_matrix[i, 1] = -1
                 self.removed_connections += 1
-
         connection_matrix = connection_matrix[connection_matrix[:, 0] != -1]
         connection_matrix = connection_matrix[connection_matrix[:, 1] != -1]
         connection_matrix = connection_matrix[connection_matrix[:, 0].argsort()]
