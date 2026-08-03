@@ -91,17 +91,18 @@ def _get_parser() -> argparse.ArgumentParser:
 def _main() -> None:
     parser = _get_parser()
     args = parser.parse_args()
-    ccr = CombineCropRows()
-    ccr.angle_tolerance = args.angle_tolerance
-    ccr.vegetation_threshold = args.vegetation_threshold
-    ccr.min_unhealthy_vegetation_length = args.min_unhealthy_vegetation_length
-    ccr.max_segment_length = args.max_segment_length
+    ccr = CombineCropRows(
+        args.angle_tolerance,
+        args.vegetation_threshold,
+        args.min_unhealthy_vegetation_length,
+        args.max_segment_length,
+        output_path_connected_crop_rows=args.output_path_connected_crop_rows,
+        output_path_vegetation_points=args.output_path_vegetation_points,
+        output_path_healthy_vegetation_segments=args.output_path_healthy_vegetation_segments,
+        output_path_unhealthy_vegetation_segments=args.output_path_unhealthy_vegetation_segments,
+        max_workers=args.max_workers,
+    )
     ccr.ccbt.distance_tolerance = args.distance_tolerance
-    ccr.output_path_connected_crop_rows = args.output_path_connected_crop_rows
-    ccr.output_path_healthy_vegetation_segments = args.output_path_healthy_vegetation_segments
-    ccr.output_path_unhealthy_vegetation_segments = args.output_path_unhealthy_vegetation_segments
-    ccr.output_path_vegetation_points = args.output_path_vegetation_points
-    ccr.max_workers = args.max_workers
     ccr.main(args.path_row_information, args.path_points_in_rows)
 
 

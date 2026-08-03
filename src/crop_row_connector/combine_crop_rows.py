@@ -18,21 +18,58 @@ from crop_row_connector.find_connection_of_rows_between_two_tiles import FindCon
 
 
 class CombineCropRows:
-    """Combine crop rows from different tiles into one line."""
+    """
+    Combine crop rows from different tiles into one line.
 
-    def __init__(self) -> None:
-        self.angle_tolerance: float
-        self.vegetation_threshold = None
-        self.min_unhealthy_vegetation_length = None
-        self.max_segment_length = None
+    Parameters
+    ----------
+    angle_tolerance
+        Maximum angle difference in radians for rows to be considered for connection.
+    vegetation_threshold
+        Grayscale threshold (0-255) for classifying vegetation as healthy.
+    min_unhealthy_vegetation_length
+        Minimum spatial extent in meters for unhealthy vegetation segments to be recorded.
+    max_segment_length
+        Maximum length in meters for vegetation classification segments.
+    output_path_connected_crop_rows
+        Path to save connected crop rows to CSV.
+    output_path_vegetation_points
+        Path to save all vegetation points associated with connected rows.
+    output_path_healthy_vegetation_segments
+        Path to save segments with healthy vegetation.
+    output_path_unhealthy_vegetation_segments
+        Path to save segments with unhealthy vegetation.
+    max_workers
+        Maximum number of parallel workers for processing.
+    """
 
+    def __init__(
+        self,
+        angle_tolerance: float,
+        vegetation_threshold: float,
+        min_unhealthy_vegetation_length: float,
+        max_segment_length: float,
+        *,
+        output_path_connected_crop_rows: Path | None = None,
+        output_path_vegetation_points: Path | None = None,
+        output_path_healthy_vegetation_segments: Path | None = None,
+        output_path_unhealthy_vegetation_segments: Path | None = None,
+        max_workers: int | None = None,
+    ) -> None:
+        self.angle_tolerance = angle_tolerance
+        self.vegetation_threshold = vegetation_threshold
+        self.min_unhealthy_vegetation_length = min_unhealthy_vegetation_length
+        self.max_segment_length = max_segment_length
         # Output paths, if None, the respective output will not be saved
-        self.output_path_connected_crop_rows: Path
-        self.output_path_vegetation_points = None
-        self.output_path_healthy_vegetation_segments = None
-        self.output_path_unhealthy_vegetation_segments = None
+        self.output_path_connected_crop_rows = output_path_connected_crop_rows
+        self.output_path_vegetation_points = output_path_vegetation_points
+        self.output_path_healthy_vegetation_segments = output_path_healthy_vegetation_segments
+        self.output_path_unhealthy_vegetation_segments = output_path_unhealthy_vegetation_segments
 
-        self.max_workers = os.cpu_count()
+        if max_workers is None:
+            self.max_workers = os.cpu_count()
+        else:
+            self.max_workers = max_workers
 
         self.ccbt = FindConnectionOfRowsBetweenTwoTiles()
         self.ccrc = CombineCropRowsFromConnections()
@@ -231,8 +268,9 @@ class CombineCropRows:
                 "dubli_error",
             ],
         )
-        self.ensure_parent_directory_exist(self.output_path_connected_crop_rows)
-        DF_connected_crop_rows.to_csv(self.output_path_connected_crop_rows, index=False)
+        if self.output_path_connected_crop_rows is not None:
+            self.ensure_parent_directory_exist(self.output_path_connected_crop_rows)
+            DF_connected_crop_rows.to_csv(self.output_path_connected_crop_rows, index=False)
 
     def merge_all_points_in_all_crop_rows_remove(
         self,
