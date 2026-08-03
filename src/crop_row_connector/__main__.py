@@ -11,13 +11,13 @@ def _get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Combine crop rows")
     parser.add_argument(
         "path_row_information",
-        type=str,
+        type=Path,
         help="Path to the csv file containing the general information af the crop rows "
         "(tile number, tile position, row angle, row number, x1, y1, x2, y2 (start and end point of the row in the tile))",
     )
     parser.add_argument(
         "path_points_in_rows",
-        type=str,
+        type=Path,
         help="Path to the csv file containing each point in the crop rows and their amount of vegetation "
         "(tile number, row number, x, y, vegetation)",
     )
