@@ -27,8 +27,8 @@ class Tile:
 class FindConnectionOfRowsBetweenTwoTiles:
     """Find connection of rows between two tiles."""
 
-    def __init__(self) -> None:
-        self.distance_tolerance: float
+    def __init__(self, distance_tolerance: float) -> None:
+        self.distance_tolerance = distance_tolerance
         self.removed_connections = 0
         self.removed_padded_connections = 0
 

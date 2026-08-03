@@ -96,13 +96,13 @@ def _main() -> None:
         args.vegetation_threshold,
         args.min_unhealthy_vegetation_length,
         args.max_segment_length,
+        args.distance_tolerance,
         output_path_connected_crop_rows=args.output_path_connected_crop_rows,
         output_path_vegetation_points=args.output_path_vegetation_points,
         output_path_healthy_vegetation_segments=args.output_path_healthy_vegetation_segments,
         output_path_unhealthy_vegetation_segments=args.output_path_unhealthy_vegetation_segments,
         max_workers=args.max_workers,
     )
-    ccr.ccbt.distance_tolerance = args.distance_tolerance
     ccr.connect_crop_rows(args.path_row_information, args.path_points_in_rows)
 
 

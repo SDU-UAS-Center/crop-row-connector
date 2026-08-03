@@ -47,6 +47,7 @@ class CombineCropRows:
         vegetation_threshold: float,
         min_unhealthy_vegetation_length: float,
         max_segment_length: float,
+        distance_tolerance: float,
         *,
         output_path_connected_crop_rows: Path | None = None,
         output_path_vegetation_points: Path | None = None,
@@ -67,7 +68,7 @@ class CombineCropRows:
             self.max_workers = os.cpu_count()
         else:
             self.max_workers = max_workers
-        self.ccbt = FindConnectionOfRowsBetweenTwoTiles()
+        self.ccbt = FindConnectionOfRowsBetweenTwoTiles(distance_tolerance)
         self.ccrc = CombineCropRowsFromConnections()
 
     def _ensure_parent_directory_exist(self, path: Path) -> None:
