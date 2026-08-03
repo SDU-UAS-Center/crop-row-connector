@@ -5,7 +5,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
-import crop_row_connector.Hungarian_algorithm as HA
+from crop_row_connector.Hungarian_algorithm import hungarian_algorithm
 
 
 class Tile:
@@ -24,7 +24,6 @@ class FindConnectionOfRowsBetweenTwoTiles:
     """Find connection of rows between two tiles."""
 
     def __init__(self) -> None:
-        self.Hun_alg = HA.HungarianAlgorithm()
         self.distance_tolerance: float
         self.removed_connections = 0
         self.removed_padded_connections = 0
@@ -33,7 +32,7 @@ class FindConnectionOfRowsBetweenTwoTiles:
         """Calculate the connections between two tiles based on the edges of the tiles."""
         cost_mat_hung, cost_mat_dist = self.cost_matrix_global(tile_1.rows, tile_2.rows)
 
-        connection_matrix = self.Hun_alg.hungarian_algorithm(cost_mat_hung)
+        connection_matrix = hungarian_algorithm(cost_mat_hung)
         connection_matrix = self.remove_padded_rows_cols(
             tile_1.rows,
             tile_2.rows,
