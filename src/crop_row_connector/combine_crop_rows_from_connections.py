@@ -20,10 +20,14 @@ class CombineCropRowsFromConnections:
         """
         Connect the crop rows of 2 tiles based on the connections.
         The rows are connected to existing rows if any, otherwise new rows are added.
+
+        Parameters
+        ----------
+        connections
+            Connection matrix from Hungarian algorithm
         """
         for row in connections:
             unknown_crop_row = True
-
             # Find the index of the row if they where already added
             index_row_1 = np.array(
                 (self.connected_crop_rows[:, np.r_[1, 2]] == (tile_1_number, row[0])).all(axis=1).nonzero()
@@ -31,7 +35,6 @@ class CombineCropRowsFromConnections:
             index_row_2 = np.array(
                 (self.connected_crop_rows[:, np.r_[1, 2]] == (tile_2_number, row[1])).all(axis=1).nonzero()
             ).reshape(-1)
-
             if index_row_1.size > 0 and index_row_2.size > 0:
                 if self.connected_crop_rows[index_row_1[0]][0] != self.connected_crop_rows[index_row_2[0]][0]:
                     # print("Connecting two existing crop rows")
@@ -42,16 +45,13 @@ class CombineCropRowsFromConnections:
                         index_row_1, tile_1_number, row[0], index_row_2, tile_2_number, row[1]
                     )
                 unknown_crop_row = False
-
             elif index_row_1.size > 0:
                 # self.connect_crop_row_to_existing_crop_row(tile_2_number, [row[1], row[4], row[5], row[2], row[3]], index_row_1)
                 self.connect_crop_row_to_existing_crop_row(tile_2_number, row[1], tile_1_number, row[0], index_row_1)
                 unknown_crop_row = False
-
             elif index_row_2.size > 0:
                 self.connect_crop_row_to_existing_crop_row(tile_1_number, row[0], tile_2_number, row[1], index_row_2)
                 unknown_crop_row = False
-
             if unknown_crop_row:
                 self.connected_crop_rows = np.vstack(
                     (
@@ -129,10 +129,10 @@ class CombineCropRowsFromConnections:
         )
 
         self.add_connection(new_tile_number, new_row, index)
-
         self.connections += 1
 
     def add_connection(self, tile_number: int, row: np.ndarray, index: np.ndarray) -> None:
+        """Add connection between rows."""
         if self.connected_crop_rows[index[0], 5] is None:
             self.connected_crop_rows[index[0], 5] = tile_number
             self.connected_crop_rows[index[0], 6] = row
@@ -160,7 +160,6 @@ class CombineCropRowsFromConnections:
         """Connect two existing full crop rows."""
         self.add_connection(tile_number_2, row_2, index_row_1)
         self.add_connection(tile_number_1, row_1, index_row_2)
-
         if index_row_1[0] < index_row_2[0]:
             self.move_row_and_adjust_indexes(index_row_1, index_row_2)
         else:
@@ -173,10 +172,8 @@ class CombineCropRowsFromConnections:
         row_number_large = self.connected_crop_rows[largest_row_index[0]][0]
         row_number_small = self.connected_crop_rows[smallest_row_index[0]][0]
         row_index_to_change = np.array((self.connected_crop_rows[:, 0] == row_number_large).nonzero())
-
         for idx in row_index_to_change:
             self.connected_crop_rows[idx, 0] = row_number_small
-
         self.connected_crop_rows[self.connected_crop_rows[:, 0] > row_number_large, 0] = (
             self.connected_crop_rows[self.connected_crop_rows[:, 0] > row_number_large, 0] - 1
         )
@@ -185,11 +182,7 @@ class CombineCropRowsFromConnections:
     def add_unused_rows(self, tiles: dict[int, Tile]) -> None:
         """Add the unused rows to the connected crop rows."""
         for tile in tiles.values():
-            # print(f"tile rows: {tile.rows}")
-            # print(f"tile unused rows: {tile.unused_rows}")
             for row in tile.unused_rows:
-                # print("row: ", row)
-                # print(f"row center: {tile.rows[int(row), 4]}")
                 self.connected_crop_rows = np.vstack(
                     (
                         self.connected_crop_rows,
@@ -223,5 +216,4 @@ class CombineCropRowsFromConnections:
         # Check for duplicates in the first two columns (crop row index and tile number)
         DF_row_idx_tile = pd.DataFrame(self.connected_crop_rows[:, :2], columns=["crop_row_index", "tile_number"])
         duplicates = DF_row_idx_tile.duplicated(keep=False)
-
         self.connected_crop_rows[:, 11] = duplicates
