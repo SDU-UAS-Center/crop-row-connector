@@ -11,7 +11,7 @@ import crop_row_connector.Hungarian_algorithm as HA
 class Tile:
     """Hold tile information."""
 
-    def __init__(self, tile_number: int, position: list[float], angle: float, rows: np.ndarray) -> None:
+    def __init__(self, tile_number: int, position: list[int], angle: float, rows: np.ndarray) -> None:
         self.tile_number = tile_number
         self.position = position
         self.angle = angle
