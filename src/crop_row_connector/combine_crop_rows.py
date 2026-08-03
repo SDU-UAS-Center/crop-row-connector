@@ -2,8 +2,6 @@
 
 import math
 import os
-from argparse import Namespace
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -65,16 +63,14 @@ class CombineCropRows:
         self.output_path_vegetation_points = output_path_vegetation_points
         self.output_path_healthy_vegetation_segments = output_path_healthy_vegetation_segments
         self.output_path_unhealthy_vegetation_segments = output_path_unhealthy_vegetation_segments
-
         if max_workers is None:
             self.max_workers = os.cpu_count()
         else:
             self.max_workers = max_workers
-
         self.ccbt = FindConnectionOfRowsBetweenTwoTiles()
         self.ccrc = CombineCropRowsFromConnections()
 
-    def ensure_parent_directory_exist(self, path: Path) -> None:
+    def _ensure_parent_directory_exist(self, path: Path) -> None:
         """
         Ensure the parent directory of `path` exists.
 
@@ -127,18 +123,14 @@ class CombineCropRows:
             Dictionary mapping each tile number to a tile object.
         """
         tile_numbers = np.unique(row_information[:, 0]).astype(int)
-        print("Tile numbers: ", tile_numbers)
-
         tiles = {}
-
         for tile_number in tile_numbers:
             rows_in_tile = row_information[row_information[:, 0] == tile_number]
-            tile_position = rows_in_tile[0, 1:3].astype(int)
+            tile_position = rows_in_tile[0, 1:3].astype(int).tolist()
             row_angle = rows_in_tile[0, 3]
             rows = rows_in_tile[:, 4:]
             tile_load = Tile(tile_number, tile_position, row_angle, rows)
             tiles.update({tile_number: tile_load})
-
         return tiles
 
     def create_tile_grid(self, row_information: np.ndarray, tiles: dict[int, Tile]) -> np.ndarray:
@@ -162,13 +154,10 @@ class CombineCropRows:
         np.ndarray
             2D array where each cell contains a tile number if present, otherwise -1.
         """
-        tile_grid_size = np.amax(row_information[:, 1:3], axis=0).astype(int)
-
+        tile_grid_size = np.max(row_information[:, 1:3], axis=0).astype(int)
         grid = np.full((tile_grid_size[0] + 2, tile_grid_size[1] + 2), -1, dtype=np.int32)
-
         for tile in tiles.values():
             grid[tile.position[0], tile.position[1]] = tile.tile_number
-
         return grid
 
     def connect_rows_in_tiles(self, grid: np.ndarray, tiles: dict[int, Tile]) -> None:
@@ -198,30 +187,14 @@ class CombineCropRows:
             unit="tiles",
         ):
             tile_current = tiles[grid[y, x]]
-
             # Connect tile to the right
             tile_right_num = grid[y, x + 1]
             if tile_right_num != -1:
                 self.connect_2_tiles(tile_current, tiles[tile_right_num])
-
             # connect tile below
             tile_below_num = grid[y + 1, x]
             if tile_below_num != -1:
                 self.connect_2_tiles(tile_current, tiles[tile_below_num])
-
-        print("removed connections: ", self.ccbt.removed_connections)
-        print("removed padded connections: ", self.ccbt.removed_padded_connections)
-        print("full connections", self.ccrc.connecting_full)
-        print("connections", self.ccrc.connections)
-
-        # Compute which crop row has the most connections
-        # connected_crop_rows[:, 0] contains the row IDs
-        counts = np.bincount(self.ccrc.connected_crop_rows[:, 0].astype(int))
-        max_row_id = np.argmax(counts)
-        max_connections = counts[max_row_id]
-
-        print(f"Crop row with most connections: {max_row_id} with {max_connections} connections")
-
         # add the uncombined rows to the connected crop rows
         self.ccrc.add_unused_rows(tiles)
 
@@ -269,7 +242,7 @@ class CombineCropRows:
             ],
         )
         if self.output_path_connected_crop_rows is not None:
-            self.ensure_parent_directory_exist(self.output_path_connected_crop_rows)
+            self._ensure_parent_directory_exist(self.output_path_connected_crop_rows)
             DF_connected_crop_rows.to_csv(self.output_path_connected_crop_rows, index=False)
 
     def merge_all_points_in_all_crop_rows_remove(
@@ -300,9 +273,7 @@ class CombineCropRows:
             Merged and sorted crop rows including vegetation and duplicate information.
         """
         DF_vegetation_rows = pd.read_csv(path_points_in_rows)
-
         tolerance = self.ccbt.distance_tolerance / 10
-
         crop_rows = mpro.merge_points_removing_overlap(
             connected_crop_rows.astype(np.float64),
             DF_vegetation_rows.to_numpy(),
@@ -310,14 +281,10 @@ class CombineCropRows:
             tolerance,
             self.max_workers,
         )
-
         DF_crop_rows = pd.DataFrame(crop_rows, columns=DF_vegetation_rows.columns)
         DF_crop_rows["vegetation"] = DF_crop_rows["vegetation"].astype(int)
-
         DF_connected_crop_rows = pd.DataFrame(connected_crop_rows[:, :3], columns=["crop_row", "tile", "row"])
-
         DF_connected_crop_rows.insert(1, "duplicate", connected_crop_rows[:, -1])
-
         DF_crop_rows = pd.merge(
             DF_connected_crop_rows,
             DF_crop_rows,
@@ -325,57 +292,44 @@ class CombineCropRows:
             right_on=["tile", "row"],
             how="left",
         )
-
         DF_crop_rows_new = pd.DataFrame(columns=DF_crop_rows.columns)
         rows = []
         # sort the crop rows by coordinates
         for _, subset in DF_crop_rows.groupby("crop_row", sort=False):
             tile_number = subset["tile"].iat[0]
             angle = tiles[tile_number].angle
-
             if angle < math.pi / 4 or angle > 3 * math.pi / 4:
                 crop_row = subset.sort_values(by=["y", "x"])
             else:
                 crop_row = subset.sort_values(by=["x", "y"])
-
             rows.append(crop_row)
-
         DF_crop_rows_new = pd.concat(rows, ignore_index=True)
-
         DF_crop_rows_new = DF_crop_rows_new.drop(columns=["tile", "row"]).rename(columns={"crop_row": "row"})[
             ["row", "x", "y", "vegetation", "duplicate"]
         ]
-
         if self.output_path_vegetation_points is not None:
-            path = self.output_path_vegetation_points
-            self.ensure_parent_directory_exist(Path(path))
-            DF_crop_rows_new.to_csv(path, index=False)
-
+            self._ensure_parent_directory_exist(self.output_path_vegetation_points)
+            DF_crop_rows_new.to_csv(self.output_path_vegetation_points, index=False)
         return DF_crop_rows_new
 
     def add_segment(self, target: list[list[np.ndarray]], start_idx: int, end_idx: int, coords: np.ndarray) -> None:
         if self.max_segment_length is None or self.max_segment_length <= 0:
             target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
             return
-
         seg_start = start_idx
         added = False
-
         for j in range(start_idx + 1, end_idx + 1):
             p_seg_start = coords[seg_start]
             p_curr = coords[j]
             dist_from_start = math.hypot(p_curr[0] - p_seg_start[0], p_curr[1] - p_seg_start[1])
-
             if dist_from_start > self.max_segment_length:
                 # Current point exceeds max_segment_length, end segment at previous point
                 target.append([coords[seg_start].tolist(), coords[j - 1].tolist()])
                 seg_start = j - 1
                 added = True
-
         if seg_start < end_idx:
             target.append([coords[seg_start].tolist(), coords[end_idx].tolist()])
             added = True
-
         if not added:
             target.append([coords[start_idx].tolist(), coords[end_idx].tolist()])
 
@@ -412,28 +366,21 @@ class CombineCropRows:
         """
         writer_healthy = None
         writer_unhealthy = None
-
         if self.output_path_healthy_vegetation_segments is not None:
             writer_healthy = shapefile.Writer(self.output_path_healthy_vegetation_segments)
             writer_healthy.field("Crop_row", "N")
-
         if self.output_path_unhealthy_vegetation_segments is not None:
             writer_unhealthy = shapefile.Writer(self.output_path_unhealthy_vegetation_segments)
             writer_unhealthy.field("Crop_row", "N")
-
         segments = []
-
         for crop_row_id, crop_row in DF_crop_rows.groupby("row", sort=False):
             coords = crop_row[["x", "y"]].to_numpy(dtype=np.float64)
             vegetation = crop_row["vegetation"].to_numpy()
-
             n = len(coords)
             if n < 2:
                 continue
-
             healthy_lines: list[list[np.ndarray]] = []
             unhealthy_lines: list[list[np.ndarray]] = []
-
             # Build runs of contiguous healthy/unhealthy points
             healthy_mask = vegetation >= self.vegetation_threshold
             runs: list[tuple[bool, int, int]] = []  # (is_healthy, start, end)
@@ -445,7 +392,6 @@ class CombineCropRows:
                     run_start = i
                     run_state = bool(healthy_mask[i])
             runs.append((run_state, run_start, n - 1))
-
             # If no healthy runs exist, everything is unhealthy
             if not any(is_healthy for is_healthy, _, _ in runs):
                 self.add_segment(unhealthy_lines, 0, n - 1, coords)
@@ -483,14 +429,12 @@ class CombineCropRows:
 
                     merged_runs.append((is_healthy, s, e))
                     i += 1
-
                 # Emit final segments (with max-length splitting applied)
                 for is_healthy, s, e in merged_runs:
                     if is_healthy:
                         self.add_segment(healthy_lines, s, e, coords)
                     else:
                         self.add_segment(unhealthy_lines, s, e, coords)
-
             segments.append(
                 {
                     "row_id": int(crop_row_id),
@@ -498,21 +442,17 @@ class CombineCropRows:
                     "unhealthy": unhealthy_lines,
                 }
             )
-
             # Write shapefiles if enabled
             if healthy_lines and writer_healthy is not None:
                 writer_healthy.line(healthy_lines)
                 writer_healthy.record(int(crop_row_id))
-
             if unhealthy_lines and writer_unhealthy is not None:
                 writer_unhealthy.line(unhealthy_lines)
                 writer_unhealthy.record(int(crop_row_id))
-
         if writer_healthy is not None:
             writer_healthy.close()
         if writer_unhealthy is not None:
             writer_unhealthy.close()
-
         return segments
 
     def length_of_segments(self, segments: list[dict[str, Any]]) -> tuple[float, float, float]:
@@ -537,7 +477,6 @@ class CombineCropRows:
         total_length = 0.0
         healthy_length = 0.0
         unhealthy_length = 0.0
-
         for row in segments:
             # Healthy segments
             if len(row["healthy"]) > 0:
@@ -548,10 +487,8 @@ class CombineCropRows:
                         dx = seg[0][0] - seg[1][0]
                         dy = seg[0][1] - seg[1][1]
                         length = math.hypot(dx, dy)
-
                         healthy_length += length
                         total_length += length
-
             # Unhealthy segments
             if len(row["unhealthy"]) > 0:
                 for seg in row["unhealthy"]:
@@ -561,59 +498,27 @@ class CombineCropRows:
                         dx = seg[0][0] - seg[1][0]
                         dy = seg[0][1] - seg[1][1]
                         length = math.hypot(dx, dy)
-
                         unhealthy_length += length
                         total_length += length
-
         if math.isnan(unhealthy_length):
             print("!!!!!! length is nan")
-
-        print("Total length:", total_length)
-        print("Healthy vegetation length:", healthy_length)
-        print("Unhealthy vegetation length:", unhealthy_length)
-
         return total_length, healthy_length, unhealthy_length
 
     def main(self, path_row_information: str, path_points_in_rows: str) -> None:
         row_information = self.load_csv(path_row_information)
-
         tiles = self.seperate_row_information_to_tile(row_information)
-
         grid = self.create_tile_grid(row_information, tiles)
-
         self.connect_rows_in_tiles(grid, tiles)
-
         self.ccrc.sort_connected_crop_rows()
-
         self.ccrc.check_dublicates()
-
         if self.output_path_connected_crop_rows is not None:
             self.connected_crop_rows_to_csv(self.ccrc.connected_crop_rows)
-
         DF_crop_rows_new = self.merge_all_points_in_all_crop_rows_remove(
             self.ccrc.connected_crop_rows, path_points_in_rows, row_information, tiles
         )
-
         if (
             self.output_path_healthy_vegetation_segments is not None
             or self.output_path_unhealthy_vegetation_segments is not None
         ):
             segments = self.separate_healthy_and_unhealthy_vegetation_segments(DF_crop_rows_new)
             self.length_of_segments(segments)
-
-    def save_statistics(self, stat_path: Path, args: Namespace, tiles: list[Tile]) -> None:
-        """Save the statistics of the run to a file."""
-        print(f'Writing statistics to the folder "{stat_path}"')
-
-        with open(stat_path.joinpath("/output_file.txt"), "w") as f:
-            f.write("Input parameters:\n")
-            f.write(f" - Segmented Orthomosaic: {args.segmented_orthomosaic}\n")
-            f.write(f" - Orthomosaic: {args.orthomosaic}\n")
-            f.write(f" - Tile sizes: {args.tile_size}\n")
-            f.write(f" - Output tile location: {args.output_tile_location}\n")
-            f.write(f" - Generated debug images: {args.generate_debug_images}\n")
-            f.write(f" - Tile boundary: {args.tile_boundary}\n")
-            f.write(f" - Ecpected crop row distance: {args.expected_crop_row_distance}\n")
-            f.write(f" - Date and time of execution: {datetime.now().replace(microsecond=0)}\n")
-            f.write("\n\nOutput from run\n")
-            f.write(f" - Number of tiles: {len(tiles)}\n")
