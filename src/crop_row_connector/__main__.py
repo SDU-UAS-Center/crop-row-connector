@@ -51,9 +51,9 @@ def _get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--angle_tolerance",
-        default=0.1,
+        default=10,
         type=float,
-        help="Angle tolerance for two crop rows to be connected. Measured in radians.",
+        help="Angle tolerance for two crop rows to be connected. Measured in degrees.",
     )
     parser.add_argument(
         "--distance_tolerance",

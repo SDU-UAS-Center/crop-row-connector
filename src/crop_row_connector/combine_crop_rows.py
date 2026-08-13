@@ -55,7 +55,7 @@ class CombineCropRows:
         output_path_unhealthy_vegetation_segments: Path | None = None,
         max_workers: int | None = None,
     ) -> None:
-        self.angle_tolerance = angle_tolerance
+        self.angle_tolerance = np.deg2rad(angle_tolerance)
         self.vegetation_threshold = vegetation_threshold
         self.min_unhealthy_vegetation_length = min_unhealthy_vegetation_length
         self.max_segment_length = max_segment_length
