@@ -82,7 +82,7 @@ class CombineCropRows:
         -----
         - Each row corresponds to a crop row.
         - Columns contain:
-            [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end]
+            [tile_number, x_position, y_position, angle, row, x_start, y_start, x_end, y_end, x_mid, y_mid]
         """
         return pd.read_csv(path).to_numpy(dtype=np.float64)
 
