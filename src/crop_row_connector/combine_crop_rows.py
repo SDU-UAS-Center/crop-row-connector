@@ -227,7 +227,7 @@ class CombineCropRows:
     def merge_all_points_in_all_crop_rows_remove(
         self,
         connected_crop_rows: np.ndarray,
-        path_points_in_rows: Path,
+        DF_vegetation_rows: pd.DataFrame,
         row_information: np.ndarray,
         tiles: dict[int, Tile],
     ) -> pd.DataFrame:
@@ -251,7 +251,6 @@ class CombineCropRows:
         pd.DataFrame
             Merged and sorted crop rows including vegetation and duplicate information.
         """
-        DF_vegetation_rows = pd.read_csv(path_points_in_rows)
         tolerance = self.ccbt.distance_tolerance / 10
         crop_rows = mpro.merge_points_removing_overlap(
             connected_crop_rows.astype(np.float64),
@@ -502,8 +501,9 @@ class CombineCropRows:
         self.ccrc.check_dublicates()
         if self.output_path_connected_crop_rows is not None:
             self.connected_crop_rows_to_csv(self.ccrc.connected_crop_rows)
+        DF_vegetation_rows = pd.read_csv(path_points_in_rows)
         DF_crop_rows_new = self.merge_all_points_in_all_crop_rows_remove(
-            self.ccrc.connected_crop_rows, path_points_in_rows, row_information, tiles
+            self.ccrc.connected_crop_rows, DF_vegetation_rows, row_information, tiles
         )
         if (
             self.output_path_healthy_vegetation_segments is not None
