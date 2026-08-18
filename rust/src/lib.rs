@@ -130,7 +130,7 @@ mod rust_fn {
         */
 
 
-        rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().unwrap();
+        rayon::ThreadPoolBuilder::new().num_threads(num_threads).build().unwrap();
 
         let merged_rows = Arc::new(Mutex::new(Vec::new()));
         let items: Vec<u64> = (0..connected_crop_rows.nrows() as u64).collect();
