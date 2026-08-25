@@ -139,7 +139,7 @@ class CombineCropRows:
             grid[tile.position[0], tile.position[1]] = tile.tile_number
         return grid
 
-    def connect_rows_in_tiles(self, grid: np.ndarray, tiles: dict[int, Tile]) -> None:
+    def connect_rows_in_tiles(self, grid: np.ndarray, tiles: dict[int, Tile], tqdm_disable: bool = False) -> None:
         """
         Connect crop rows across neighboring tiles in the grid.
 
@@ -164,6 +164,7 @@ class CombineCropRows:
             total=len(ys),
             desc="Connecting rows in tiles",
             unit="tiles",
+            disable=tqdm_disable,
         ):
             tile_current = tiles[grid[y, x]]
             # Connect tile to the right
