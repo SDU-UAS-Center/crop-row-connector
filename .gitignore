@@ -56,3 +56,4 @@ venv.bak/
 *.bak
 .DS_Store
 .vscode
+.worktrees/
