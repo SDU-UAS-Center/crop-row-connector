@@ -37,14 +37,13 @@ Running crop-row-connector:
         path/to/row_information_global.csv \
         path/to/points_in_rows.csv \
         --distance_tolerance 0.12 \
-        --angle_tolerance 0.12 \
+        --angle_tolerance 7 \
         --output_path_connected_crop_rows path/to/connected_crop_rows.csv \
         --output_path_vegetation_points path/to/line_points.csv \
         --output_path_unhealthy_vegetation_segments path/to/unhealthy.shp \
         --output_path_healthy_vegetation_segments path/to/healthy.shp
 
-
-See `Tutorial with Test Data <1_tutorials/running_the_test_dataset.rst>`_ for a introduction tutorial on how to use the tool.
+See the `Tutorial with Test Data <tutorials/running_the_test_dataset.rst>`_ for a walkthrough including the expected output.
 
 Documentation Overview
 ----------------------
@@ -60,18 +59,18 @@ This documentation is organized into four sections to help you learn and use cro
     Practical recipes for common tasks when building interfaces or analyzing your own data.
 
     - `Prepare and validate your field data <how_to/preparing_your_data.rst>`_
-    - `Find the right tolerance values for your equipment <2_how_to/choose_connection_parameters.rst>`_
-    - `Integrate crop-row-connector into your applications <2_how_to/using_as_library.rst>`_
+    - `Find the right tolerance values for your equipment <how_to/choose_connection_parameters.rst>`_
+    - `Integrate crop-row-connector into your applications <how_to/using_as_library.rst>`_
 
 **Explanation** — *Understand the concepts*
     Conceptual guides that explain how and why crop row connection works.
 
-    - `How the connection algorithm works under the hood <4_explanation/algorithm_overview.rst>`_
+    - `How the connection algorithm works under the hood <explanation/algorithm_overview.rst>`_
 
 **Reference** — *Look up details*
     Technical API documentation for developers integrating the tool into applications.
 
-    - `Complete API documentation for all classes and methods <3_reference/api_reference.rst>`_
+    - `Complete API documentation for all classes and methods <reference.rst>`_
 
 Installation
 ------------
@@ -80,7 +79,7 @@ Installation
 
 .. code-block:: shell
 
-   pip install CDC
+   pip install crop-row-connector
 
 See :doc:`Installation <installation>` for more advanced methods of installation.
 
