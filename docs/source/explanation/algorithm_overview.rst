@@ -97,7 +97,7 @@ Crop rows within a field typically run in consistent directions:
 
 The ``angle_tolerance`` parameter filters out impossible matches:
    - Rows at completely different angles are unlikely to be the same row
-   - Typical tolerance: 0.1 radians (~5.7 degrees)
+   - Typical tolerance: 5-10 degrees
 
 Parameters and Their Meaning
 =============================
@@ -112,10 +112,10 @@ Connection Parameters
        - Higher values → more connections (risk of false matches)
        - Lower values → fewer connections (risk of missing real matches)
 
-**angle_tolerance** (radians)
+**angle_tolerance** (degrees)
     Maximum allowed angle difference between rows for connection.
-       - Default: 0.1 rad (~5.7 degrees)
-       - Typical range: 0.05-0.2 rad
+       - Default: 10 degrees
+       - Typical range: 3-20 degrees
        - Higher values → more flexible angle matching
        - Lower values → stricter angular requirements
 

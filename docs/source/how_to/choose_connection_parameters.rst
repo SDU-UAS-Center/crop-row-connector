@@ -13,11 +13,11 @@ For most agricultural applications, start with these defaults:
 
 .. code-block:: python
 
-    angle_tolerance = 0.1                   # ~5.7 degrees
-    distance_tolerance = 0.12               # 12 centimeters
-    vegetation_threshold = 127              # Mid-range grayscale
-    min_unhealthy_vegetation_length = 0.1   # 10 centimeters
-    max_segment_length = 5                  # 5 meters
+    angle_tolerance = 10                     # degrees
+    distance_tolerance = 0.12                 # 12 centimeters
+    vegetation_threshold = 127                # Mid-range grayscale
+    min_unhealthy_vegetation_length = 0.1     # 10 centimeters
+    max_segment_length = 5                    # 5 meters
 
 Then fine-tune based on results (see Testing and Validation section).
 
@@ -73,7 +73,7 @@ Factors Affecting Distance Tolerance
 Understanding Angle Tolerance
 -----------------------------
 
-The ``angle_tolerance`` parameter controls whether rows in adjacent tiles are **aligned directionally** before considering distance.
+The ``angle_tolerance`` parameter controls whether rows in adjacent tiles are **aligned directionally** before considering distance. It is measured in **degrees**.
 
 What It Measures
 ^^^^^^^^^^^^^^^^
@@ -94,12 +94,12 @@ This is a **sanity check** before measuring distance:
 Setting Angle Tolerance
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Too Large** (e.g., > 0.3 rad = 17°):
+**Too Large** (e.g., > 20°):
 - Risk: Compares rows that clearly run different directions
 - Symptom: May find "connections" across field rotations
 - Impact: More false positives in distance matching
 
-**Too Small** (e.g., < 0.02 rad = 1°):
+**Too Small** (e.g., < 1°):
 - Risk: Rejects valid connections when angles vary slightly
 - Symptom: Misses real connections if detector gives varying angles
 - Impact: Fragmented rows at tile boundaries
@@ -108,16 +108,16 @@ Recommended Values by Field Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Uniform Field (no row bending)**
-    - Typical range: 0.05 - 0.1 rad (2.9 - 5.7 degrees)
-    - Example: 0.1 rad - allows natural variation in detector
+    - Typical range: 3 - 6 degrees
+    - Example: 5 degrees - allows natural variation in detector
 
 **Field with Slight Row Bending**
-    - Typical range: 0.1 - 0.15 rad (5.7 - 8.6 degrees)
-    - Example: 0.12 rad - allows for gradual directional change
+    - Typical range: 6 - 9 degrees
+    - Example: 7 degrees - allows for gradual directional change
 
-**Field with Significant Row Bending**
-    - Typical range: 0.2 - 0.3 rad (11.5 - 17 degrees)
-    - Example: 0.25 rad - accommodates major field rotations
+**Field with Significant Row Bending or Rotation**
+    - Typical range: 12 - 20 degrees
+    - Example: 15 degrees - accommodates major field rotations
 
 Vegetation Parameters
 ---------------------
@@ -186,7 +186,7 @@ Workflow for Finding Optimal Parameters
 1. **Start with defaults**:
 
    - distance_tolerance = 0.12 m
-   - angle_tolerance = 0.1 rad
+   - angle_tolerance = 10 degrees
 
 2. **Run on data**:
 
@@ -256,7 +256,7 @@ Common Issues and Solutions
 
 *Solutions*:
    1. Check field for actual rotation
-   2. Increase ``angle_tolerance`` if rotation is expected (eg. try 0.15-0.2 rad)
+   2. Increase ``angle_tolerance`` if rotation is expected (eg. try 10-15 degrees)
    3. Verify detector is producing consistent angles
 
 **Irregular vegetation classifications**
@@ -278,7 +278,7 @@ Example: Optimizing for Your Field
 .. code-block:: python
 
     distance_tolerance = 0.15
-    angle_tolerance = 0.1
+    angle_tolerance = 5
 
 *Test 1 Results*: Adjacent rows merged into single rows
 
@@ -298,7 +298,7 @@ Example: Optimizing for Your Field
 
 .. code-block:: python
 
-    distance_tolerance = 0.8
-    angle_tolerance = 0.1
+    distance_tolerance = 0.08
+    angle_tolerance = 5
 
-*Validation*: All rows properly connected with no false merges ✓
+*Validation*: All rows properly connected with no false merges ✓ (0.08 m is below half the row spacing, so adjacent rows cannot merge)
