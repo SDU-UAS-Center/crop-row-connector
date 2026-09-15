@@ -37,17 +37,21 @@ File Structure
 
 **Required Columns** (in this order):
 
-=========== ========== ========== ====== === ======= ======= ===== ===== ===== ======
-tile_number x_position y_position angle  row x_start y_start x_end y_end x_mid y_mid
-=========== ========== ========== ====== === ======= ======= ===== ===== ===== ======
-1           0          0          1.5708 0   100.5   50.2    100.5 150.3 100.5 100.25
-1           0          0          1.5708 1   105.2   49.8    105.2 149.9 105.2 99.85
-2           1          0          1.5708 0   205.1   51.0    205.1 151.2 205.1 101.1
-=========== ========== ========== ====== === ======= ======= ===== ===== ===== ======
+===== ========== ========== ====== === ======= ======= ===== ===== ===== ======
+tile  x_position y_position angle  row x_start y_start x_end y_end x_mid y_mid
+===== ========== ========== ====== === ======= ======= ===== ===== ===== ======
+1     0          0          1.5708 0   100.5   50.2    100.5 150.3 100.5 100.25
+1     0          0          1.5708 1   105.2   49.8    105.2 149.9 105.2 99.85
+2     1          0          1.5708 0   205.1   51.0    205.1 151.2 205.1 101.1
+===== ========== ========== ====== === ======= ======= ===== ===== ===== ======
+
+.. note::
+    This file is read **by column position**, not by header name — the column
+    order must be exactly as shown, but the header text itself does not matter.
 
 **Column Definitions**:
 
-- **tile_number**: Integer ID unique within this field (typically sequential: 1, 2, 3, ...)
+- **tile**: Integer ID unique within this field (typically sequential: 1, 2, 3, ...)
 - **x_position**: Tile X coordinate in the field grid
 - **y_position**: Tile Y coordinate in the field grid
 - **angle**: Crop row direction in radians (typically 0 to 2π)
@@ -69,19 +73,23 @@ File Structure
 
 **Required Columns** (in this order):
 
-=========== ========== ===== ==== ==========
-tile_number row_number x     y    vegetation
-=========== ========== ===== ==== ==========
-1           0          100.5 50.2 200
-1           0          100.5 50.5 195
-1           0          100.5 50.8 198
-1           1          105.2 49.8 212
-=========== ========== ===== ==== ==========
+===== ==== ===== ==== ==========
+tile  row  x     y    vegetation
+===== ==== ===== ==== ==========
+1     0    100.5 50.2 200
+1     0    100.5 50.5 195
+1     0    100.5 50.8 198
+1     1    105.2 49.8 212
+===== ==== ===== ==== ==========
+
+.. warning::
+    The ``tile`` and ``row`` columns are looked up **by name**, so the header must
+    use exactly these column names. The remaining columns are read by position.
 
 **Column Definitions**:
 
-- **tile_number**: Must match tile numbers from row information
-- **row_number**: Row number within tile (must match row_information)
+- **tile**: Tile number (must match tile numbers from row information)
+- **row**: Row number within tile (must match the ``row`` column in row information)
 - **x**: X coordinate of point
 - **y**: Y coordinate of point
 - **vegetation**: Vegetation intensity (0-255 grayscale)
