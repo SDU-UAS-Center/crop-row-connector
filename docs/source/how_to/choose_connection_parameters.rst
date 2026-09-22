@@ -190,7 +190,7 @@ Workflow for Finding Optimal Parameters
 
 2. **Run on data**:
 
-   - Use your ``docs/test_dataset/`` or a small field subset
+   - Use your ``test_dataset/`` or a small field subset
 
 3. **Inspect results**:
 

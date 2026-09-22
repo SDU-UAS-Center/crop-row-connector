@@ -22,7 +22,7 @@ class CombineCropRows:
     Parameters
     ----------
     angle_tolerance
-        Maximum angle difference in radians for rows to be considered for connection.
+        Maximum angle difference in degrees for rows to be considered for connection.
     vegetation_threshold
         Grayscale threshold (0-255) for classifying vegetation as healthy.
     min_unhealthy_vegetation_length
